@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "badge": "Maestro Premier Shawarma & Crispy Bistro",
+    "titlePrefix": "Culinary Artistry with the",
+    "titleHighlight": "Authentic Maestro Touch",
+    "description": "An unmatched dining experience harmonizing rich Levantine marinades with golden crispy perfection. From our signature giant shawarma spit to royal party celebration towers, every meal is a symphony of flavor!",
+    "exploreMenu": "Explore Full Menu",
+    "orderSpecial": "Order Celebration Tower",
+    "stats": {
+      "experience": "Years of Mastery",
+      "dishes": "Signature Dishes",
+      "satisfied": "Happy Guests",
+      "rating": "Quality Score"
+    }
+  },
+  "promotions": {
+    "sectionTitle": "Maestro Exclusive Deals",
+    "sectionSubtitle": "Save more and feast together with family bundles and crispy value boxes loaded with flavor",
+    "saveBadge": "OFF",
+    "expiresIn": "Ends in",
+    "days": "days",
+    "orderDeal": "Claim Deal Now"
+  },
+  "features": {
+    "freshIngredients": {
+      "title": "Fresh Chicken Daily",
+      "desc": "Hand-selected fresh poultry marinated daily with Maestro's secret Levantine herb infusion"
+    },
+    "authenticRecipe": {
+      "title": "Authentic Damascus Spices",
+      "desc": "Over 15 natural spices and cold-pressed olive oils ensuring deep heritage taste"
+    },
+    "fastService": {
+      "title": "Hot & Crispy Preparation",
+      "desc": "Freshly crafted upon your order to reach your table piping hot, crispy, and succulent"
+    },
+    "celebrationEvents": {
+      "title": "Party Towers & Shawarma Cakes",
+      "desc": "Innovative celebration towers and shawarma birthday cakes crafted for your milestone moments"
+    }
+  },
+  "about": {
+    "title": "The Maestro Story",
+    "paragraph1": "At Maestro, we view food craftsmanship as a culinary symphony. We began with an unwavering dedication to serve the most succulent Levantine shawarma and golden, crunch-loaded broasted chicken.",
+    "paragraph2": "We preserve traditional culinary secrets while introducing signature innovations like the famous 'Princess' and 'Supreme' meals and custom event celebration towers that elevate every gathering."
+  },
+  "footer": {
+    "aboutText": "Maestro Restaurant - The pinnacle of artisan shawarma, crispy broasted, and gourmet subs. Dedicated to serving our community with uncompromising quality.",
+    "quickLinks": "Quick Links",
+    "openingHours": "Opening Hours & Contact",
+    "hoursText": "Daily from 12:00 PM to 02:00 AM",
+    "location": "Syria, Al-Nabek, Amin Street",
+    "phone": "0969 697 587",
+    "allRightsReserved": "All Rights Reserved © MAESTRO Restaurant"
+  }
+}

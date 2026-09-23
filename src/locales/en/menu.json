@@ -1,0 +1,43 @@
+{
+  "sectionTitle": "Maestro Culinary Menu",
+  "sectionSubtitle": "Indulge in authentic Levantine shawarma, golden crispy broasted chicken, and gourmet loaded subs crafted with passion",
+  "categories": {
+    "all": "All Dishes",
+    "shawarma": "Maestro Shawarma",
+    "broasted": "Broasted & Crispy",
+    "sandwiches": "Subs & Supreme",
+    "towers": "Celebration Towers",
+    "drinks": "Fresh Drinks"
+  },
+  "sort": {
+    "recommended": "Chef's Recommended",
+    "priceLow": "Price: Low to High",
+    "priceHigh": "Price: High to Low",
+    "popular": "Most Popular"
+  },
+  "filters": {
+    "all": "All",
+    "onlySpicy": "Spicy Only",
+    "onlySignature": "Maestro Signatures"
+  },
+  "emptyState": {
+    "title": "No Dishes Found",
+    "subtitle": "Try searching with different terms or select another category"
+  },
+  "modal": {
+    "ingredients": "Key Ingredients",
+    "chooseSize": "Choose Meal Option / Size",
+    "spiciness": "Spice Level",
+    "spicinessOptions": {
+      "mild": "Mild (Regular)",
+      "medium": "Medium Spicy",
+      "extraSpicy": "Fiery Hot"
+    },
+    "additions": "Customize Add-ons",
+    "specialInstructions": "Special Kitchen Notes",
+    "instructionsPlaceholder": "e.g., extra toum garlic, no pickles, extra toasted...",
+    "quantity": "Quantity",
+    "total": "Total",
+    "addedSuccess": "Dish successfully added to order!"
+  }
+}

@@ -1,0 +1,32 @@
+.maestro-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform var(--transition-smooth), 
+              box-shadow var(--transition-smooth), 
+              border-color var(--transition-smooth);
+  position: relative;
+}
+
+.maestro-card-glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.maestro-card-interactive {
+  cursor: pointer;
+}
+
+.maestro-card-interactive:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-hover);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.maestro-card-glow {
+  border-color: var(--border-gold);
+  box-shadow: var(--accent-gold-glow);
+}

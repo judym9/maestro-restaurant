@@ -1,0 +1,113 @@
+.maestro-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.maestro-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Sizes */
+.maestro-btn-sm {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.maestro-btn-md {
+  padding: 0.65rem 1.35rem;
+  font-size: 0.95rem;
+}
+
+.maestro-btn-lg {
+  padding: 0.85rem 1.85rem;
+  font-size: 1.1rem;
+}
+
+/* Variants */
+.maestro-btn-primary {
+  background: var(--accent-gold-gradient);
+  color: var(--btn-primary-text, #0b0c10);
+  box-shadow: var(--button-ambient-glow, 0 4px 15px rgba(245, 158, 11, 0.28));
+}
+
+.maestro-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45);
+}
+
+.maestro-btn-primary:active {
+  transform: translateY(0);
+}
+
+.maestro-btn-crimson {
+  background: var(--accent-crimson-gradient);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+}
+
+.maestro-btn-crimson:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(225, 29, 72, 0.5);
+}
+
+.maestro-btn-secondary {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.maestro-btn-secondary:hover {
+  background: var(--bg-surface);
+  border-color: var(--border-hover);
+  color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.maestro-btn-outline {
+  background: transparent;
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+.maestro-btn-outline:hover {
+  background: rgba(245, 158, 11, 0.12);
+  transform: translateY(-2px);
+}
+
+.maestro-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.maestro-btn-ghost:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+/* Spinner */
+.btn-spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

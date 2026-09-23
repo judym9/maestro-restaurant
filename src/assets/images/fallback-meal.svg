@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="foodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24" />
+      <stop offset="100%" stop-color="#121316" />
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#foodGrad)" />
+  <circle cx="200" cy="140" r="90" fill="url(#goldGlow)" />
+  <circle cx="200" cy="140" r="50" stroke="#f59e0b" stroke-width="2" fill="none" stroke-dasharray="4,4" opacity="0.4" />
+  <!-- Chef Cloche / Food Plate Icon -->
+  <path d="M160 160 C160 120 240 120 240 160 Z" fill="#f59e0b" opacity="0.85" />
+  <rect x="150" y="162" width="100" height="6" rx="3" fill="#f59e0b" opacity="0.9" />
+  <circle cx="200" cy="120" r="5" fill="#f59e0b" />
+  <text x="200" y="205" font-family="'Cairo', sans-serif" font-size="16" font-weight="bold" fill="#f8fafc" text-anchor="middle" letter-spacing="1">MAESTRO • مطعم مايسترو</text>
+  <text x="200" y="225" font-family="'Cairo', sans-serif" font-size="12" fill="#94a3b8" text-anchor="middle">نكهة لا تُنسى</text>
+</svg>

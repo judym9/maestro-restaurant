@@ -1,0 +1,78 @@
+{
+  "brandName": "مطعم مايسترو",
+  "tagline": "نغمة النكهة الأصيلة",
+  "nav": {
+    "home": "الرئيسية",
+    "menu": "قائمة الطعام",
+    "promotions": "العروض الخاصة",
+    "about": "عن مايسترو",
+    "contact": "تواصل معنا",
+    "orderNow": "اطلب الآن"
+  },
+  "actions": {
+    "viewDetails": "التفاصيل",
+    "order": "طلب الوجبة",
+    "addToOrder": "إضافة للطلب",
+    "close": "إغلاق",
+    "search": "ابحث عن وجبتك المفضلة...",
+    "clearSearch": "مسح البحث",
+    "filter": "تصفية",
+    "sortBy": "ترتيب حسب",
+    "next": "التالي",
+    "prev": "السابق",
+    "customize": "تخصيص الوجبة",
+    "callNow": "اتصل بنا"
+  },
+  "theme": {
+    "toggle": "تبديل المظهر",
+    "dark": "الوضع الليلي",
+    "light": "الوضع النهاري"
+  },
+  "language": {
+    "toggle": "English",
+    "current": "العربية"
+  },
+  "badges": {
+    "signature": "مميز",
+    "bestseller": "الأكثر طلباً",
+    "spicy": "حار ولذيذ",
+    "new": "جديد",
+    "limited": "عرض لفترة محدودة"
+  },
+  "cart": {
+    "title": "سلة طلبات مايسترو",
+    "emptyTitle": "سلة الطلبات فارغة",
+    "emptySubtitle": "اختر أشهى وجبات الشاورما والبروستد وأضفها إلى سلتك!",
+    "browseMenu": "تصفح القائمة الآن",
+    "item": "وجبة",
+    "items": "وجبات",
+    "subtotal": "المجموع الفرعي",
+    "estimatedPrep": "وقت التحضير التقريبي",
+    "prepMinutes": "20 - 30 دقيقة",
+    "deliveryNote": "التوصيل متاح لجميع المناطق في سوريا",
+    "total": "المجموع الإجمالي",
+    "checkoutWhatsApp": "تأكيد الطلب عبر واتساب",
+    "clearCart": "تفريغ السلة",
+    "clearConfirm": "هل أنت متأكد من رغبتك بتفريغ محتويات السلة؟",
+    "itemAdded": "تمت إضافة الوجبة إلى السلة بنجاح!",
+    "spiceLevel": "درجة الحدة",
+    "instructions": "ملاحظات المطبخ",
+    "remove": "حذف",
+    "checkoutTitle": "بيانات التوصيل والطلب",
+    "nameLabel": "الاسم الكريم",
+    "namePlaceholder": "مثال: أحمد العلي",
+    "phoneLabel": "رقم الهاتف / واتساب",
+    "phonePlaceholder": "مثال: 0969697587",
+    "addressLabel": "عنوان التوصيل أو الحي",
+    "addressPlaceholder": "مثال: المزة، نزلة الإسكان، جانب صيدلية...",
+    "placeOrderBtn": "تأكيد وإرسال الطلب",
+    "placingOrder": "جاري حفظ الطلب في النظام...",
+    "orderSuccessTitle": "تم استلام طلبك بنجاح!",
+    "orderSuccessSubtitle": "فريق مطعم مايسترو بدأ بتحضير وجبتك الشهية بكل عناية",
+    "orderNumberLabel": "رقم الطلب",
+    "whatsappFollowup": "متابعة الطلب عبر واتساب",
+    "backToMenu": "العودة للقائمة",
+    "proceedToCheckout": "متابعة بيانات التوصيل",
+    "backToItems": "تعديل محتويات السلة"
+  }
+}

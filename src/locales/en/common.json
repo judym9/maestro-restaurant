@@ -1,0 +1,78 @@
+{
+  "brandName": "MAESTRO Restaurant",
+  "tagline": "Symphony of Authentic Flavors",
+  "nav": {
+    "home": "Home",
+    "menu": "Menu",
+    "promotions": "Special Offers",
+    "about": "About Us",
+    "contact": "Contact",
+    "orderNow": "Order Now"
+  },
+  "actions": {
+    "viewDetails": "Details",
+    "order": "Order Dish",
+    "addToOrder": "Add to Order",
+    "close": "Close",
+    "search": "Search for your favorite dish...",
+    "clearSearch": "Clear search",
+    "filter": "Filter",
+    "sortBy": "Sort by",
+    "next": "Next",
+    "prev": "Previous",
+    "customize": "Customize Meal",
+    "callNow": "Call Us"
+  },
+  "theme": {
+    "toggle": "Toggle Theme",
+    "dark": "Dark Mode",
+    "light": "Light Mode"
+  },
+  "language": {
+    "toggle": "العربية",
+    "current": "English"
+  },
+  "badges": {
+    "signature": "Signature",
+    "bestseller": "Bestseller",
+    "spicy": "Spicy & Hot",
+    "new": "New",
+    "limited": "Limited Time"
+  },
+  "cart": {
+    "title": "Maestro Order Cart",
+    "emptyTitle": "Your Cart is Empty",
+    "emptySubtitle": "Explore our delicious shawarma and crispy meals to fill your cart!",
+    "browseMenu": "Browse Menu Now",
+    "item": "dish",
+    "items": "dishes",
+    "subtotal": "Subtotal",
+    "estimatedPrep": "Estimated Preparation",
+    "prepMinutes": "20 - 30 mins",
+    "deliveryNote": "Fast delivery service across Syria",
+    "total": "Grand Total",
+    "checkoutWhatsApp": "Order via WhatsApp",
+    "clearCart": "Clear Cart",
+    "clearConfirm": "Are you sure you want to clear your cart?",
+    "itemAdded": "Dish successfully added to cart!",
+    "spiceLevel": "Spice Level",
+    "instructions": "Kitchen Notes",
+    "remove": "Remove",
+    "checkoutTitle": "Delivery & Customer Details",
+    "nameLabel": "Your Name",
+    "namePlaceholder": "e.g., John Doe",
+    "phoneLabel": "Phone Number / WhatsApp",
+    "phonePlaceholder": "e.g., 0969697587",
+    "addressLabel": "Delivery Address / Neighborhood",
+    "addressPlaceholder": "e.g., Mezzeh, building, landmark...",
+    "placeOrderBtn": "Confirm & Place Order",
+    "placingOrder": "Saving order to system...",
+    "orderSuccessTitle": "Order Received Successfully!",
+    "orderSuccessSubtitle": "The Maestro kitchen team is already preparing your delicious meal with care",
+    "orderNumberLabel": "Order Number",
+    "whatsappFollowup": "Track via WhatsApp",
+    "backToMenu": "Back to Menu",
+    "proceedToCheckout": "Proceed to Checkout",
+    "backToItems": "Edit Cart Items"
+  }
+}
