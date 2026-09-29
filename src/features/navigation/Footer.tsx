@@ -1,11 +1,20 @@
 import React from 'react';
-import { Phone, Clock, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { Phone, Clock, MapPin, Heart, MessageCircle, ExternalLink } from 'lucide-react';
 import { BrandAssets } from '../../utils/imageRegistry';
 import { useLanguage } from '../../app/providers/LanguageProvider';
+import { useSiteSettings } from '../settings/context/SiteSettingsContext';
 import './Footer.css';
 
 export const Footer: React.FC = () => {
   const { language, t } = useLanguage();
+  const { settings } = useSiteSettings();
+
+  const isAr = language === 'ar';
+  const restaurantName = isAr ? settings.restaurant_name_ar : settings.restaurant_name_en;
+  const address = isAr ? settings.address_ar : settings.address_en;
+  const hours = isAr ? settings.working_hours_ar : settings.working_hours_en;
+  const primaryPhone = settings.primary_phone || '0969 697 587';
+  const rawWa = settings.whatsapp_number || '963969697587';
 
   return (
     <footer id="footer-section" className="maestro-footer">
@@ -26,7 +35,7 @@ export const Footer: React.FC = () => {
               </picture>
               <span className="footer-brand-title">
                 <span className="gold-gradient-text">
-                  {language === 'ar' ? 'مطعم مايسترو' : 'MAESTRO Restaurant'}
+                  {restaurantName}
                 </span>
               </span>
             </div>
@@ -39,35 +48,47 @@ export const Footer: React.FC = () => {
             
             <div className="footer-contact-item">
               <Clock size={18} className="footer-contact-icon" />
-              <span>{t.home.footer.hoursText}</span>
+              <span>{hours || t.home.footer.hoursText}</span>
             </div>
 
-            <div className="footer-contact-item">
+            <div className="footer-contact-item footer-address-block">
               <MapPin size={18} className="footer-contact-icon" />
-              <span>{t.home.footer.location}</span>
+              <div className="footer-address-content">
+                <span className="footer-address-text">{address || t.home.footer.location}</span>
+                <a
+                  href="https://maps.google.com/?q=Amin+Street,+Al-Nabek,+Syria"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-map-link"
+                  title={isAr ? 'عرض الموقع على خرائط Google' : 'View on Google Maps'}
+                >
+                  <span>{isAr ? 'عرض على خرائط Google' : 'View on Google Maps'}</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
             </div>
 
             <div className="footer-contact-item">
               <Phone size={18} className="footer-contact-icon" />
               <a
-                href="tel:+963969697587"
+                href={`tel:${primaryPhone.replace(/\s+/g, '')}`}
                 className="footer-phone-link"
                 dir="ltr"
               >
-                0969 697 587
+                {primaryPhone}
               </a>
             </div>
 
             <div className="footer-contact-item">
               <MessageCircle size={18} className="footer-contact-icon" />
               <a
-                href="https://wa.me/963969697587"
+                href={`https://wa.me/${rawWa}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="footer-phone-link"
                 dir="ltr"
               >
-                +963 969 697 587 (WhatsApp)
+                +{rawWa} (WhatsApp)
               </a>
             </div>
           </div>

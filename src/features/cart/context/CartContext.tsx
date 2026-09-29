@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useMemo } from 'react';
 import type { CartState, CartAction, CartContextValue, CartItem, AddCartItemPayload } from '../types/cart.types';
 import { formatSYP } from '../../../utils/currency';
 import { useLanguage } from '../../../app/providers/LanguageProvider';
+import { useSiteSettings } from '../../../features/settings/context/SiteSettingsContext';
 
 
 const generateCartItemId = (
@@ -131,6 +132,7 @@ import { CartContext } from './cartStateContext';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { language, isRtl } = useLanguage();
+  const { settings } = useSiteSettings();
   // Strictly in-memory session cart: always starts empty on load/reload
   const [state, dispatch] = useReducer(cartReducer, initialCartState);
 
@@ -197,7 +199,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkoutViaWhatsApp = () => {
     if (state.items.length === 0) return;
 
-    const phone = '963969697587';
+    const phone = settings.whatsapp_number ? settings.whatsapp_number.replace(/\D/g, '') : '963969697587';
     let message = isRtl
       ? `*طلب جديد من مطعم مايسترو*\n------------------------------\n`
       : `*New Order from MAESTRO Restaurant*\n------------------------------\n`;
@@ -221,8 +223,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const totalFormatted = formatSYP(grandTotal, { locale: language });
     message += `------------------------------\n*${isRtl ? 'المجموع الإجمالي' : 'Grand Total'}: ${totalFormatted}*\n`;
     message += isRtl
-      ? `يرجى تأكيد الطلب وتحديد عنوان التوصيل. شكراً لكم!`
-      : `Please confirm the order and specify the delivery address. Thank you!`;
+      ? `التوصيل: النبك - شارع أمين وما حولها\nيرجى تأكيد الطلب وتحديد عنوان التوصيل الدقيق. شكراً لكم!`
+      : `Delivery: Al-Nabek - Amin Street & surrounding areas\nPlease confirm the order and specify your exact delivery address. Thank you!`;
 
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');

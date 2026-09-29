@@ -1,5 +1,5 @@
 .about-section {
-  padding: 5.5rem 0;
+  padding: var(--space-section) 0;
   background: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
@@ -10,33 +10,35 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 4rem;
+  gap: 4.5rem;
 }
 
 @media (max-width: 960px) {
   .about-grid {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 3rem;
   }
 }
 
 .about-images-cluster {
   position: relative;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 1.25rem;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1.5rem;
 }
 
 .about-image-card {
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   box-shadow: var(--card-shadow);
-  transition: transform var(--transition-smooth);
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
 }
 
 .about-image-card:hover {
-  transform: scale(1.03);
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--border-gold);
+  box-shadow: var(--card-hover-shadow);
 }
 
 .about-content {
@@ -45,36 +47,52 @@
 }
 
 .about-title {
-  font-size: 2.3rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
   font-weight: 900;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   margin-bottom: 1.5rem;
-  line-height: 1.2;
+  line-height: var(--leading-tight, 1.2);
+  letter-spacing: var(--tracking-tight, -0.02em);
 }
 
 .about-text {
   font-size: 1.05rem;
   color: var(--text-secondary);
-  line-height: 1.8;
+  line-height: var(--leading-relaxed, 1.8);
   margin-bottom: 1.25rem;
 }
 
 .about-highlights-list {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 1rem;
+  gap: 0.95rem;
+  margin-top: 1.25rem;
 }
 
 .about-highlight-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   font-weight: 700;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.975rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.about-highlight-item:hover {
+  transform: translateX(4px);
+  border-color: var(--border-hover);
+}
+
+[dir='rtl'] .about-highlight-item:hover {
+  transform: translateX(-4px);
 }
 
 .about-check-icon {
   color: var(--accent-gold);
+  flex-shrink: 0;
 }

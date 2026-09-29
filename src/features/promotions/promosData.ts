@@ -11,7 +11,28 @@ export interface PromoDeal {
   originalPrice: number;
   discountPercent: number;
   remainingDays: number;
+  expirationDate?: string;
   featured?: boolean;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface PromoFormData {
+  titleAr: string;
+  titleEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  badgeAr: string;
+  badgeEn: string;
+  imageKey: string;
+  price: number;
+  originalPrice: number;
+  discountPercent: number;
+  remainingDays: number;
+  expirationDate?: string;
+  featured: boolean;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export const PROMOS_DATA: PromoDeal[] = [
@@ -29,6 +50,8 @@ export const PROMOS_DATA: PromoDeal[] = [
     discountPercent: 25,
     remainingDays: 4,
     featured: true,
+    isActive: true,
+    sortOrder: 1,
   },
   {
     id: 'promo-princess-combo',
@@ -44,6 +67,8 @@ export const PROMOS_DATA: PromoDeal[] = [
     discountPercent: 21,
     remainingDays: 2,
     featured: true,
+    isActive: true,
+    sortOrder: 2,
   },
   {
     id: 'promo-family-broasted',
@@ -58,6 +83,9 @@ export const PROMOS_DATA: PromoDeal[] = [
     originalPrice: 230000,
     discountPercent: 22,
     remainingDays: 5,
+    featured: false,
+    isActive: true,
+    sortOrder: 3,
   },
   {
     id: 'promo-shawarma-birthday',
@@ -72,5 +100,8 @@ export const PROMOS_DATA: PromoDeal[] = [
     originalPrice: 210000,
     discountPercent: 19,
     remainingDays: 7,
+    featured: false,
+    isActive: true,
+    sortOrder: 4,
   },
 ];

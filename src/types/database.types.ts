@@ -6,15 +6,90 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export interface ThemePaletteConfig {
+  primary_accent: string;
+  dark_bg: string;
+  dark_surface: string;
+  light_bg: string;
+  light_surface: string;
+  dark_border?: string;
+  light_border?: string;
+}
+
 export interface Database {
   public: {
     Tables: {
+      site_settings: {
+        Row: {
+          id: string;
+          restaurant_name_ar: string;
+          restaurant_name_en: string;
+          address_ar: string;
+          address_en: string;
+          maps_embed_url: string;
+          primary_phone: string;
+          whatsapp_number: string;
+          working_hours_ar: string;
+          working_hours_en: string;
+          delivery_estimate_ar: string;
+          delivery_estimate_en: string;
+          is_restaurant_open: boolean;
+          banner_enabled: boolean;
+          banner_text_ar: string;
+          banner_text_en: string;
+          theme_palette: ThemePaletteConfig;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          restaurant_name_ar?: string;
+          restaurant_name_en?: string;
+          address_ar?: string;
+          address_en?: string;
+          maps_embed_url?: string;
+          primary_phone?: string;
+          whatsapp_number?: string;
+          working_hours_ar?: string;
+          working_hours_en?: string;
+          delivery_estimate_ar?: string;
+          delivery_estimate_en?: string;
+          is_restaurant_open?: boolean;
+          banner_enabled?: boolean;
+          banner_text_ar?: string;
+          banner_text_en?: string;
+          theme_palette?: ThemePaletteConfig;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          restaurant_name_ar?: string;
+          restaurant_name_en?: string;
+          address_ar?: string;
+          address_en?: string;
+          maps_embed_url?: string;
+          primary_phone?: string;
+          whatsapp_number?: string;
+          working_hours_ar?: string;
+          working_hours_en?: string;
+          delivery_estimate_ar?: string;
+          delivery_estimate_en?: string;
+          is_restaurant_open?: boolean;
+          banner_enabled?: boolean;
+          banner_text_ar?: string;
+          banner_text_en?: string;
+          theme_palette?: ThemePaletteConfig;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: string;
           name_ar: string;
           name_en: string;
           slug: string;
+          sort_order: number;
+          is_active: boolean;
           created_at: string;
         };
         Insert: {
@@ -22,6 +97,8 @@ export interface Database {
           name_ar: string;
           name_en: string;
           slug: string;
+          sort_order?: number;
+          is_active?: boolean;
           created_at?: string;
         };
         Update: {
@@ -29,6 +106,85 @@ export interface Database {
           name_ar?: string;
           name_en?: string;
           slug?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      menu_items: {
+        Row: {
+          id: string;
+          category_id: string | null;
+          name_ar: string;
+          name_en: string;
+          description_ar: string | null;
+          description_en: string | null;
+          price: number;
+          image_url: string | null;
+          badge: string | null;
+          is_available: boolean;
+          preparation_time: string | null;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id?: string | null;
+          name_ar: string;
+          name_en: string;
+          description_ar?: string | null;
+          description_en?: string | null;
+          price: number;
+          image_url?: string | null;
+          badge?: string | null;
+          is_available?: boolean;
+          preparation_time?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string | null;
+          name_ar?: string;
+          name_en?: string;
+          description_ar?: string | null;
+          description_en?: string | null;
+          price?: number;
+          image_url?: string | null;
+          badge?: string | null;
+          is_available?: boolean;
+          preparation_time?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      admin_users: {
+        Row: {
+          id: string;
+          email: string;
+          role: 'admin' | 'manager' | 'editor';
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          role?: 'admin' | 'manager' | 'editor';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          role?: 'admin' | 'manager' | 'editor';
           created_at?: string;
         };
         Relationships: [];
@@ -147,7 +303,7 @@ export interface Database {
             foreignKeyName: "order_items_meal_id_fkey";
             columns: ["meal_id"];
             isOneToOne: false;
-            referencedRelation: "meals";
+            referencedRelation: "menu_items";
             referencedColumns: ["id"];
           }
         ];
@@ -157,7 +313,10 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -168,7 +327,20 @@ export interface Database {
   };
 }
 
+export type SiteSettingsRow = Database['public']['Tables']['site_settings']['Row'];
+export type SiteSettingsInsert = Database['public']['Tables']['site_settings']['Insert'];
+export type SiteSettingsUpdate = Database['public']['Tables']['site_settings']['Update'];
+
 export type CategoryRow = Database['public']['Tables']['categories']['Row'];
+export type CategoryInsert = Database['public']['Tables']['categories']['Insert'];
+export type CategoryUpdate = Database['public']['Tables']['categories']['Update'];
+
+export type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];
+export type MenuItemInsert = Database['public']['Tables']['menu_items']['Insert'];
+export type MenuItemUpdate = Database['public']['Tables']['menu_items']['Update'];
+
+export type AdminUserRow = Database['public']['Tables']['admin_users']['Row'];
+
 export type MealRow = Database['public']['Tables']['meals']['Row'];
 export type OrderRow = Database['public']['Tables']['orders']['Row'];
 export type OrderInsert = Database['public']['Tables']['orders']['Insert'];

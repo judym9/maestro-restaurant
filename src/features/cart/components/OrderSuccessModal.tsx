@@ -4,6 +4,7 @@ import { Modal } from '../../../common/components/Modal/Modal';
 import { Button } from '../../../common/components/Button/Button';
 import { formatSYP } from '../../../utils/currency';
 import { useLanguage } from '../../../app/providers/LanguageProvider';
+import { useSiteSettings } from '../../../features/settings/context/SiteSettingsContext';
 import './OrderSuccessModal.css';
 
 export interface OrderSuccessModalProps {
@@ -22,9 +23,10 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
   totalPrice,
 }) => {
   const { language, isRtl, t } = useLanguage();
+  const { settings } = useSiteSettings();
 
   const handleOpenWhatsApp = () => {
-    const phone = '963969697587';
+    const phone = settings.whatsapp_number ? settings.whatsapp_number.replace(/\D/g, '') : '963969697587';
     const message = isRtl
       ? `مرحباً مطعم مايسترو، قمت بتقديم الطلب رقم *${orderNumber}* باسم *${customerName}* بقيمة *${formatSYP(totalPrice, { locale: language })}*. يرجى تأكيد استلامه. شكراً لكم!`
       : `Hello Maestro Restaurant, I just placed order *${orderNumber}* under *${customerName}* for *${formatSYP(totalPrice, { locale: language })}*. Please confirm. Thank you!`;

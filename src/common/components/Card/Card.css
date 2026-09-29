@@ -1,7 +1,7 @@
 .maestro-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--card-shadow);
   overflow: hidden;
   transition: transform var(--transition-smooth), 
@@ -11,9 +11,9 @@
 }
 
 .maestro-card-glass {
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .maestro-card-interactive {

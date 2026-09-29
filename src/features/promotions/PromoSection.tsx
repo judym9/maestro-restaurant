@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { getPromotions } from '../menu/services/mealsService';
+import { PROMOS_UPDATED_EVENT } from '../admin/hooks/usePromotions';
 import type { PromoDeal } from './promosData';
 import { PromoCard } from './PromoCard';
 import { usePromoPagination } from './usePromoPagination';
@@ -21,14 +22,20 @@ export const PromoSection: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    getPromotions().then((res) => {
-      if (isMounted) {
-        setPromos(res.data);
-        setIsLoading(false);
-      }
-    });
+    const fetchPromos = () => {
+      getPromotions().then((res) => {
+        if (isMounted) {
+          setPromos(res.data);
+          setIsLoading(false);
+        }
+      });
+    };
+
+    fetchPromos();
+    window.addEventListener(PROMOS_UPDATED_EVENT, fetchPromos);
     return () => {
       isMounted = false;
+      window.removeEventListener(PROMOS_UPDATED_EVENT, fetchPromos);
     };
   }, []);
 

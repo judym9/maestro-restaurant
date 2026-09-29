@@ -1,5 +1,49 @@
+@import "tailwindcss";
 @import './features/theme/tokens.css';
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+@theme {
+  --color-border: var(--border-color);
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-color);
+  --color-card: var(--card-bg);
+  --color-card-foreground: var(--card-text);
+  --color-muted: var(--muted-bg);
+  --color-muted-foreground: var(--muted-text);
+}
+
+:root {
+  --border-color: #e2e8f0;
+  --bg-page: #FAF7F2;
+  --text-color: #0f172a;
+  --card-bg: #ffffff;
+  --card-text: #0f172a;
+  --muted-bg: #f1f5f9;
+  --muted-text: #64748b;
+}
+
+[data-theme='dark'],
+html.dark,
+:root:not([data-theme='light']) {
+  --border-color: rgba(255, 255, 255, 0.1);
+  --bg-page: #090d16;
+  --text-color: #F8FAFC;
+  --card-bg: #141c2e;
+  --card-text: #F8FAFC;
+  --muted-bg: #0f172a;
+  --muted-text: #94A3B8;
+}
+
+[data-theme='light'],
+html.light {
+  --border-color: #e2e8f0;
+  --bg-page: #FAF7F2;
+  --text-color: #0f172a;
+  --card-bg: #ffffff;
+  --card-text: #0f172a;
+  --muted-bg: #f1f5f9;
+  --muted-text: #64748b;
+}
+
 
 /* ==========================================================================
    CSS RESET & BASE STYLES
@@ -14,9 +58,9 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  overflow-x: clip;
 }
 
 body {
@@ -26,11 +70,11 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-arabic);
-  line-height: 1.6;
+  line-height: var(--leading-normal, 1.6);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
@@ -38,10 +82,9 @@ body {
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
-/* LTR override for English */
+/* LTR typography override for English */
 [dir='ltr'] body,
 html[dir='ltr'] body {
   font-family: var(--font-latin);
@@ -49,8 +92,8 @@ html[dir='ltr'] body {
 
 /* Custom Gold Scrollbar */
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -58,12 +101,12 @@ html[dir='ltr'] body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.4);
-  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.7);
+  background: rgba(245, 158, 11, 0.65);
 }
 
 /* Text Selection */
@@ -75,8 +118,22 @@ html[dir='ltr'] body {
 /* Typography elements */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  font-weight: 700;
-  line-height: 1.25;
+  font-weight: 800;
+  line-height: var(--leading-tight, 1.2);
+  letter-spacing: var(--tracking-tight, -0.015em);
+}
+
+[dir='rtl'] h1, [dir='rtl'] h2, [dir='rtl'] h3, [dir='rtl'] h4 {
+  line-height: var(--leading-snug, 1.3);
+  letter-spacing: -0.01em;
+}
+
+[dir='ltr'] h1, [dir='ltr'] h2, [dir='ltr'] h3 {
+  letter-spacing: var(--tracking-tighter, -0.025em);
+}
+
+p {
+  line-height: var(--leading-relaxed, 1.7);
 }
 
 a {
@@ -95,14 +152,29 @@ img, svg {
 }
 
 /* ==========================================================================
-   UTILITY & GLASSMORPHISM CLASSES
+   GLASSMORPHISM & DEPTH UTILITY CLASSES
    ========================================================================== */
 
 .glass-panel {
   background: var(--bg-glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-subtle);
+}
+
+.glass-panel-heavy {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-card {
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
 }
 
 .gold-gradient-text {
@@ -124,10 +196,14 @@ img, svg {
   box-shadow: var(--accent-gold-glow);
 }
 
+.ambient-glow-gold {
+  box-shadow: var(--button-ambient-glow);
+}
+
 /* Container */
 .container {
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--container-max-w, 1280px);
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
@@ -238,18 +314,18 @@ footer[id] {
 }
 
 /* ==========================================================================
-   TRANSITION UTILITIES & BUTTERY-SMOOTH THEME TRANSITIONS
+   MICRO-INTERACTIONS & SMOOTH TRANSITIONS
    ========================================================================== */
 
 .transition-colors {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   transition-duration: 300ms;
 }
 
 .transition-all {
   transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   transition-duration: 300ms;
 }
 
@@ -261,11 +337,19 @@ footer[id] {
   transition-duration: 200ms !important;
 }
 
+.duration-500 {
+  transition-duration: 500ms !important;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 .ease-in-out {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Universal Smooth Theme Transitions (300ms) */
+/* Universal Smooth Theme Transitions (300ms ease-out) */
 body,
 header,
 nav,
@@ -293,7 +377,6 @@ section,
               color var(--transition-normal),
               box-shadow var(--transition-normal);
 }
-
 
 /* ==========================================================================
    ANIMATIONS & KEYFRAMES
@@ -324,11 +407,11 @@ section,
 @keyframes pulseSubtle {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35);
   }
   50% {
     transform: scale(1.02);
-    box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 25px 4px rgba(245, 158, 11, 0.22);
   }
 }
 
@@ -353,7 +436,7 @@ section,
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.45s var(--transition-smooth) forwards;
+  animation: fadeIn 0.4s var(--transition-smooth) forwards;
 }
 
 .animate-scale-up {

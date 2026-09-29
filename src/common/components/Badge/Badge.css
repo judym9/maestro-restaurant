@@ -2,33 +2,37 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
+  padding: 0.28rem 0.7rem;
   border-radius: var(--radius-full);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0.02em;
   width: fit-content;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .maestro-badge-gold {
   background: rgba(245, 158, 11, 0.16);
   color: var(--accent-gold);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.14);
 }
 
 .maestro-badge-crimson {
   background: rgba(225, 29, 72, 0.16);
   color: var(--crimson-500);
-  border: 1px solid rgba(225, 29, 72, 0.35);
+  border: 1px solid rgba(225, 29, 72, 0.38);
+  box-shadow: 0 0 15px rgba(225, 29, 72, 0.15);
 }
 
 .maestro-badge-emerald {
   background: rgba(16, 185, 129, 0.16);
   color: var(--emerald-500);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.14);
 }
 
 .maestro-badge-neutral {
@@ -38,7 +42,7 @@
 }
 
 .maestro-badge-pulse {
-  animation: badgePulse 2s infinite ease-in-out;
+  animation: badgePulse 2.2s infinite ease-in-out;
 }
 
 @keyframes badgePulse {
@@ -47,7 +51,7 @@
     box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4);
   }
   50% {
-    transform: scale(1.04);
-    box-shadow: 0 0 10px 2px rgba(225, 29, 72, 0.3);
+    transform: scale(1.05);
+    box-shadow: 0 0 12px 3px rgba(225, 29, 72, 0.28);
   }
 }

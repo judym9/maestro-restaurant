@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Globe, PhoneCall } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Menu, X, Globe, PhoneCall, ShieldCheck } from 'lucide-react';
 import { ThemeSwitcher } from '../theme/ThemeSwitcher';
 import { CartTriggerButton } from '../cart/components/CartTriggerButton';
 import { Button } from '../../common/components/Button/Button';
@@ -159,6 +160,27 @@ export const Navbar: React.FC = () => {
                 {t.common.nav.contact}
               </a>
             </li>
+            <li>
+              <Link
+                to="/admin"
+                className="nav-link"
+                title={language === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Portal'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: '#F59E0B',
+                  fontWeight: 600,
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                }}
+              >
+                <ShieldCheck size={14} />
+                <span>{language === 'ar' ? 'الإدارة' : 'Admin'}</span>
+              </Link>
+            </li>
           </ul>
         </nav>
 
@@ -258,6 +280,15 @@ export const Navbar: React.FC = () => {
           >
             {t.common.nav.contact}
           </a>
+          <Link
+            to="/admin"
+            className="mobile-nav-link"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#F59E0B', fontWeight: 600 }}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <ShieldCheck size={18} />
+            <span>{language === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Dashboard'}</span>
+          </Link>
 
           {/* Mobile Drawer Utility Controls: Language & Theme Switcher */}
           <div className="mobile-drawer-utilities">

@@ -1,7 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, X, Flame, Award, UtensilsCrossed } from 'lucide-react';
-import { getMeals } from './services/mealsService';
-import type { MealItem, MealCategory } from './mealsData';
+import { getMeals, getActiveMenuCategories } from './services/mealsService';
+import { MENU_UPDATED_EVENT } from '../admin/services/menuService';
+import type { MealItem } from './mealsData';
+import type { CategoryRow } from '../../types/database.types';
 import { MealCard } from './MealCard';
 import { MealDetailModal } from './MealDetailModal';
 import { Pagination } from '../../common/components/Pagination/Pagination';
@@ -11,13 +13,14 @@ import { useCart } from '../cart/hooks/useCart';
 import './MenuGrid.css';
 
 export const MenuGrid: React.FC = () => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { addItem } = useCart();
 
   const [meals, setMeals] = useState<MealItem[]>([]);
+  const [categoriesList, setCategoriesList] = useState<CategoryRow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const [selectedCategory, setSelectedCategory] = useState<MealCategory | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [onlySignature, setOnlySignature] = useState<boolean>(false);
   const [onlySpicy, setOnlySpicy] = useState<boolean>(false);
@@ -26,26 +29,44 @@ export const MenuGrid: React.FC = () => {
   // Selected meal for detail modal
   const [activeMeal, setActiveMeal] = useState<MealItem | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    getMeals().then((res) => {
-      if (isMounted) {
-        setMeals(res.data);
-        setIsLoading(false);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
+  const fetchMenuData = useCallback(async () => {
+    try {
+      const [mealsRes, cats] = await Promise.all([
+        getMeals(),
+        getActiveMenuCategories(),
+      ]);
+      setMeals(mealsRes.data);
+      setCategoriesList(cats);
+    } catch (err) {
+      console.warn('[MenuGrid] Error fetching dynamic menu data:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchMenuData();
+
+    const handleUpdate = () => {
+      fetchMenuData();
+    };
+    window.addEventListener(MENU_UPDATED_EVENT, handleUpdate);
+    return () => {
+      window.removeEventListener(MENU_UPDATED_EVENT, handleUpdate);
+    };
+  }, [fetchMenuData]);
 
   // Filter and sort items
   const filteredMeals = useMemo(() => {
     return meals.filter((meal) => {
-      // Category filter
-      if (selectedCategory !== 'all' && meal.category !== selectedCategory) {
-        return false;
+      // Category filter (slug or id match)
+      if (selectedCategory !== 'all') {
+        const matchesCategory = 
+          meal.category === selectedCategory ||
+          categoriesList.some((c) => c.slug === selectedCategory && (c.id === (meal as any).category_id || c.slug === meal.category));
+        if (!matchesCategory) return false;
       }
+
       // Tag filters
       if (onlySignature && !meal.isSignature) return false;
       if (onlySpicy && !meal.isSpicy) return false;
@@ -67,7 +88,7 @@ export const MenuGrid: React.FC = () => {
       if (sortBy === 'popular') return b.reviewsCount - a.reviewsCount;
       return (b.rating || 0) - (a.rating || 0); // Default recommended
     });
-  }, [meals, selectedCategory, onlySignature, onlySpicy, searchQuery, sortBy]);
+  }, [meals, selectedCategory, categoriesList, onlySignature, onlySpicy, searchQuery, sortBy]);
 
   // Pagination with 6 items per page
   const {
@@ -86,13 +107,17 @@ export const MenuGrid: React.FC = () => {
     return filteredMeals.slice(startIndex, endIndex);
   }, [filteredMeals, startIndex, endIndex]);
 
-  const categories: { key: MealCategory | 'all'; label: string }[] = [
-    { key: 'all', label: t.menu.categories.all },
-    { key: 'shawarma', label: t.menu.categories.shawarma },
-    { key: 'broasted', label: t.menu.categories.broasted },
-    { key: 'sandwiches', label: t.menu.categories.sandwiches },
-    { key: 'towers', label: t.menu.categories.towers },
-  ];
+  // Dynamic category tabs
+  const categoryTabs = useMemo(() => {
+    const tabs = [{ key: 'all', label: t.menu.categories.all }];
+    categoriesList.forEach((cat) => {
+      tabs.push({
+        key: cat.slug,
+        label: language === 'ar' ? cat.name_ar : cat.name_en,
+      });
+    });
+    return tabs;
+  }, [categoriesList, language, t.menu.categories.all]);
 
   return (
     <section id="menu-section" className="menu-section">
@@ -107,9 +132,9 @@ export const MenuGrid: React.FC = () => {
 
         {/* Controls Bar */}
         <div className="menu-controls">
-          {/* Category Tabs */}
+          {/* Dynamic Category Tabs */}
           <div className="menu-category-tabs" role="tablist">
-            {categories.map((cat) => (
+            {categoryTabs.map((cat) => (
               <button
                 key={cat.key}
                 type="button"

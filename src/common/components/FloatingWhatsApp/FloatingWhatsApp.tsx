@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useLanguage } from '../../../app/providers/LanguageProvider';
+import { useSiteSettings } from '../../../features/settings/context/SiteSettingsContext';
 import './FloatingWhatsApp.css';
 
 export interface FloatingWhatsAppProps {
@@ -9,18 +10,22 @@ export interface FloatingWhatsAppProps {
 }
 
 export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
-  phoneNumber = '963969697587',
-  displayNumber = '0969 697 587',
+  phoneNumber,
+  displayNumber,
 }) => {
   const { isRtl } = useLanguage();
+  const { settings } = useSiteSettings();
+
+  const activePhone = phoneNumber || settings.whatsapp_number || '963969697587';
+  const activeDisplay = displayNumber || settings.primary_phone || '0969 697 587';
 
   const labelText = isRtl
-    ? `واتساب | ${displayNumber}`
-    : `WhatsApp | ${displayNumber}`;
+    ? `واتساب | ${activeDisplay}`
+    : `WhatsApp | ${activeDisplay}`;
 
   return (
     <a
-      href={`https://wa.me/${phoneNumber}`}
+      href={`https://wa.me/${activePhone.replace(/\D/g, '')}`}
       target="_blank"
       rel="noopener noreferrer"
       className="floating-whatsapp-btn"

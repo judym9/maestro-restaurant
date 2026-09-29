@@ -28,6 +28,16 @@ export const toArabicDigits = (numStr: string): string => {
   return numStr.replace(/[0-9]/g, (w) => ARABIC_DIGITS[w] || w);
 };
 
+/**
+ * Pure Syrian Liras currency formatter
+ * Arabic: 240,000 ل.س
+ * English: 240,000 SYP
+ */
+export const formatPrice = (amount: number, locale: 'ar' | 'en' = 'ar'): string => {
+  const formattedNumber = new Intl.NumberFormat(locale === 'ar' ? 'ar-SY' : 'en-US').format(amount);
+  return locale === 'ar' ? `${formattedNumber} ل.س` : `${formattedNumber} SYP`;
+};
+
 export const formatSYP = (amount: number, options: FormatPriceOptions = {}): string => {
   const { locale = 'ar', showCurrency = true, useArabicDigits = false } = options;
 
