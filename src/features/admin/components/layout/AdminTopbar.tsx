@@ -1,137 +1,113 @@
 import React from 'react';
-import { Menu, Globe, ExternalLink, Store } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAdminLanguage } from '../../context/AdminLanguageContext';
-import { settingsService } from '../../services/settingsService';
-import type { AdminTab } from '../../types/admin.types';
+import { Menu, Plus, Utensils, Tag, ShieldCheck } from 'lucide-react';
+import type { AdminNavTab } from './AdminSidebar';
 
 interface AdminTopbarProps {
-  activeTab: AdminTab;
+  activeTab: AdminNavTab;
+  language: 'ar' | 'en';
   onOpenMobileMenu: () => void;
+  onQuickAddMeal?: () => void;
+  dishesCount: number;
+  promosCount: number;
 }
 
 export const AdminTopbar: React.FC<AdminTopbarProps> = ({
   activeTab,
+  language,
   onOpenMobileMenu,
+  onQuickAddMeal,
+  dishesCount,
+  promosCount,
 }) => {
-  const { isRTL, language, toggleLanguage } = useAdminLanguage();
-  const [status, setStatus] = React.useState(() => settingsService.getOperatingStatus());
+  const isAr = language === 'ar';
 
-  const tabTitles: Record<AdminTab, { ar: string; en: string; descAr: string; descEn: string }> = {
+  const tabTitles: Record<AdminNavTab, { titleAr: string; titleEn: string; descAr: string; descEn: string }> = {
+    dashboard: {
+      titleAr: 'نظرة عامة ومؤشرات الأداء',
+      titleEn: 'Performance & Operations',
+      descAr: 'متابعة حية لحالة مطعم مايسترو، الوجبات النشطة، والعروض الحالية',
+      descEn: 'Live operational summary of Maestro restaurant, active items, and deals',
+    },
     menu: {
-      ar: 'إدارة قائمة الطعام والتصنيفات',
-      en: 'Menu Catalog & Categories',
-      descAr: 'تعديل أسعار الليرة السورية، إضافة وتعديل الوجبات والتصنيفات',
-      descEn: 'Syrian Lira pricing, dish customization, and menu taxonomy',
+      titleAr: 'قائمة المأكولات والتصنيفات',
+      titleEn: 'Menu & Category Manager',
+      descAr: '',
+      descEn: '',
     },
     promotions: {
-      ar: 'العروض والخصومات الترويجية',
-      en: 'Promotions & Special Deals',
-      descAr: 'التحكم بشرائح العروض المعروضة للزبائن في الواجهة الرئيسية',
-      descEn: 'Configure promotional slides and limited-time discount deals',
+      titleAr: 'إدارة العروض الترويجية',
+      titleEn: 'Promotions & Special Deals',
+      descAr: 'باقات المناسبات الملكية، خصومات الشاورما، ونسب التوفير',
+      descEn: 'Configure limited-time discounts, celebratory towers, and badges',
     },
-    operations: {
-      ar: 'حالة المطعم والتشغيل المباشر',
-      en: 'Operations & Service Status',
-      descAr: 'التحكم الفوري في فتح وإغلاق استقبال الطلبات ومعلومات فرع النبك',
-      descEn: 'Toggle live ordering and configure Al-Nabek branch details',
+    settings: {
+      titleAr: 'إعدادات الفرع وساعات العمل',
+      titleEn: 'Branch Info & Working Hours',
+      descAr: '',
+      descEn: '',
     },
     theme: {
-      ar: 'محرك تخصيص المظهر والألوان',
-      en: 'Dynamic Theming Engine',
-      descAr: 'تخصيص اللون الذهبي وتدرجات الأسطح الفاخرة للواجهة',
-      descEn: 'Tailor brand gold accents, surface colors, and theme tokens',
+      titleAr: 'محرر الهوية البصرية والألوان',
+      titleEn: 'Visual Identity & Theming',
+      descAr: '',
+      descEn: '',
     },
   };
 
-  const currentTab = tabTitles[activeTab];
-
-  const handleToggleStatus = () => {
-    const updated = settingsService.saveOperatingStatus({ isOpen: !status.isOpen });
-    setStatus(updated);
-  };
+  const current = tabTitles[activeTab];
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10 shrink-0">
-      {/* Title & Mobile Hamburger */}
-      <div className="flex items-center gap-3.5 min-w-0">
+    <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-6 sm:pt-8 pb-6 sm:pb-7 mb-8 sm:mb-10 border-b border-border">
+      {/* Title & Mobile Toggle */}
+      <div className="flex items-start gap-4">
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="p-2.5 rounded-2xl bg-slate-800 text-slate-300 hover:text-white md:hidden border border-white/10 cursor-pointer shrink-0"
+          className="md:hidden p-2.5 rounded-2xl bg-card border border-border text-foreground hover:text-amber-500 shadow-sm cursor-pointer"
           aria-label="Open sidebar"
         >
-          <Menu size={20} />
+          <Menu size={22} />
         </button>
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-wide truncate">
-              {isRTL ? currentTab.ar : currentTab.en}
-            </h1>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10 shrink-0">
-              {isRTL ? 'فرع النبك' : 'Al-Nabek Branch'}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
+            <span>{isAr ? current.titleAr : current.titleEn}</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold">
+              <ShieldCheck size={14} />
+              {isAr ? 'مدير النظام' : 'Admin'}
             </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed truncate">
-            {isRTL ? currentTab.descAr : currentTab.descEn}
-          </p>
+          </h1>
+          {Boolean(isAr ? current.descAr : current.descEn) && (
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl font-medium">
+              {isAr ? current.descAr : current.descEn}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Action Controls */}
-      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 self-start md:self-auto flex-wrap">
-        {/* Live Restaurant Status Button */}
-        <button
-          type="button"
-          onClick={handleToggleStatus}
-          title={isRTL ? 'اضغط لتغيير حالة استقبال الطلبات' : 'Click to toggle open/closed'}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer active:scale-95 bg-slate-900"
-          style={{
-            borderColor: status.isOpen ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)',
-            color: status.isOpen ? '#34D399' : '#FB7185',
-          }}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              status.isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
-            }`}
-          />
-          <Store size={13} />
-          <span>
-            {status.isOpen
-              ? isRTL
-                ? 'المطعم مفتوح للطلب'
-                : 'Open for Orders'
-              : isRTL
-              ? 'المطعم مغلق حالياً'
-              : 'Kitchen Closed'}
-          </span>
-        </button>
+      {/* Quick Action Badges & Buttons */}
+      <div className="flex items-center gap-3 shrink-0 flex-wrap">
+        <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-card border border-border text-xs font-semibold text-foreground shadow-sm">
+          <Utensils size={15} className="text-amber-500" />
+          <span>{dishesCount} {isAr ? 'وجبة في القائمة' : 'Dishes'}</span>
+        </div>
 
-        {/* Language Switcher */}
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-bold transition-colors cursor-pointer"
-          title="Toggle Arabic / English"
-        >
-          <Globe size={14} className="text-amber-400" />
-          <span>{language === 'ar' ? 'English' : 'عربي'}</span>
-        </button>
+        <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-card border border-border text-xs font-semibold text-foreground shadow-sm">
+          <Tag size={15} className="text-emerald-500" />
+          <span>{promosCount} {isAr ? 'عروض نشطة' : 'Active Promos'}</span>
+        </div>
 
-        {/* Storefront Link */}
-        <Link
-          to="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-colors"
-          title={isRTL ? 'فتح واجهة المطعم في نافذة جديدة' : 'Open Storefront in new tab'}
-        >
-          <ExternalLink size={13} />
-          <span>{isRTL ? 'عرض المتجر' : 'Storefront'}</span>
-        </Link>
+        {onQuickAddMeal && (
+          <button
+            type="button"
+            onClick={onQuickAddMeal}
+            className="flex items-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-wide transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+          >
+            <Plus size={16} className="stroke-[3]" />
+            <span>{isAr ? 'إضافة وجبة جديدة' : 'Add New Meal'}</span>
+          </button>
+        )}
       </div>
-    </div>
+    </header>
   );
 };

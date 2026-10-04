@@ -1,85 +1,100 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { PROMOS_DATA } from '../../promotions/promosData';
-import type { PromoDeal } from '../../promotions/promosData';
+import type { AdminPromoDeal, PromoFormData } from '../types/promotions.types';
+import { promotionsRepository, PROMOTIONS_UPDATED_EVENT } from '../services/promotionsRepository';
+import { promotionsService } from '../services/promotionsService';
 
-const STORAGE_PROMOS_KEY = 'maestro_admin_promos';
-export const PROMOS_UPDATED_EVENT = 'maestro:promos-updated';
+export const usePromotions = (pageSize: number = 3) => {
+  const [promos, setPromos] = useState<AdminPromoDeal[]>(() => promotionsRepository.getPromotions());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingPromo, setEditingPromo] = useState<AdminPromoDeal | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-export const usePromotions = (pageSize: number = 4) => {
-  const [promos, setPromos] = useState<PromoDeal[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_PROMOS_KEY);
-        if (stored) return JSON.parse(stored);
-      } catch {}
-    }
-    return PROMOS_DATA;
-  });
-
-  const [currentPage, setCurrentPage] = useState<number>(1);
-
-  const savePromos = useCallback((updated: PromoDeal[]) => {
-    setPromos(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_PROMOS_KEY, JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent(PROMOS_UPDATED_EVENT));
-    }
+  const refreshPromos = useCallback(() => {
+    setPromos(promotionsRepository.getPromotions());
   }, []);
 
-  const togglePromoActive = useCallback((id: string) => {
-    const updated = promos.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p));
-    savePromos(updated);
-  }, [promos, savePromos]);
-
-  const movePromo = useCallback((index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= promos.length) return;
-    const copy = [...promos];
-    const [moved] = copy.splice(index, 1);
-    copy.splice(targetIndex, 0, moved);
-    savePromos(copy);
-  }, [promos, savePromos]);
-
-  const deletePromo = useCallback((id: string) => {
-    const updated = promos.filter((p) => p.id !== id);
-    savePromos(updated);
-  }, [promos, savePromos]);
-
-  const savePromo = useCallback((deal: PromoDeal) => {
-    const index = promos.findIndex((p) => p.id === deal.id);
-    let updated: PromoDeal[];
-    if (index !== -1) {
-      updated = [...promos];
-      updated[index] = deal;
-    } else {
-      updated = [deal, ...promos];
-    }
-    savePromos(updated);
-  }, [promos, savePromos]);
+  useEffect(() => {
+    window.addEventListener(PROMOTIONS_UPDATED_EVENT, refreshPromos);
+    return () => window.removeEventListener(PROMOTIONS_UPDATED_EVENT, refreshPromos);
+  }, [refreshPromos]);
 
   const totalPages = Math.max(1, Math.ceil(promos.length / pageSize));
-
-  // Ensure current page is valid
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
 
   const paginatedPromos = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return promos.slice(start, start + pageSize);
   }, [promos, currentPage, pageSize]);
 
+  const goToPage = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }, [totalPages]);
+
+  const nextPage = useCallback(() => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  }, [currentPage, totalPages]);
+
+  const prevPage = useCallback(() => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  }, [currentPage]);
+
+  const openNewPromoModal = useCallback(() => {
+    setEditingPromo(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const openEditPromoModal = useCallback((promo: AdminPromoDeal) => {
+    setEditingPromo(promo);
+    setIsModalOpen(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setEditingPromo(null);
+    setIsModalOpen(false);
+  }, []);
+
+  const savePromo = useCallback((data: PromoFormData) => {
+    const saved = promotionsRepository.savePromotion(data);
+    promotionsService.savePromotion(data).catch(console.warn);
+    refreshPromos();
+    closeModal();
+    return saved;
+  }, [refreshPromos, closeModal]);
+
+  const deletePromo = useCallback((id: string) => {
+    const res = promotionsRepository.deletePromotion(id);
+    promotionsService.deletePromotion(id).catch(console.warn);
+    refreshPromos();
+    setDeleteConfirmId(null);
+    return res;
+  }, [refreshPromos]);
+
+  const togglePromoActive = useCallback((id: string) => {
+    const res = promotionsRepository.toggleActive(id);
+    promotionsService.togglePromotionActive(id).catch(console.warn);
+    refreshPromos();
+    return res;
+  }, [refreshPromos]);
+
   return {
     promos,
     paginatedPromos,
     currentPage,
     totalPages,
-    setCurrentPage,
-    togglePromoActive,
-    movePromo,
-    deletePromo,
+    goToPage,
+    nextPage,
+    prevPage,
+    editingPromo,
+    isModalOpen,
+    deleteConfirmId,
+    setDeleteConfirmId,
+    openNewPromoModal,
+    openEditPromoModal,
+    closeModal,
     savePromo,
+    deletePromo,
+    togglePromoActive,
   };
 };

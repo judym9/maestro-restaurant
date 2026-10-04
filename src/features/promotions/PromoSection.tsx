@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { getPromotions } from '../menu/services/mealsService';
-import { PROMOS_UPDATED_EVENT } from '../admin/hooks/usePromotions';
+import { PROMOTIONS_UPDATED_EVENT } from '../admin/services/promotionsRepository';
 import type { PromoDeal } from './promosData';
 import { PromoCard } from './PromoCard';
 import { usePromoPagination } from './usePromoPagination';
@@ -32,10 +32,10 @@ export const PromoSection: React.FC = () => {
     };
 
     fetchPromos();
-    window.addEventListener(PROMOS_UPDATED_EVENT, fetchPromos);
+    window.addEventListener(PROMOTIONS_UPDATED_EVENT, fetchPromos);
     return () => {
       isMounted = false;
-      window.removeEventListener(PROMOS_UPDATED_EVENT, fetchPromos);
+      window.removeEventListener(PROMOTIONS_UPDATED_EVENT, fetchPromos);
     };
   }, []);
 

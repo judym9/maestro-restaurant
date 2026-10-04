@@ -1,57 +1,52 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ThemeTokenConfig, ThemePresetOption } from '../types/settings.types';
-import { settingsService, THEME_PRESETS } from '../services/settingsService';
+import type { ThemeTokens } from '../types/settings.types';
+import { settingsRepository, THEME_UPDATED_EVENT } from '../services/settingsRepository';
+
+import { useTheme, type Theme } from '../../../app/providers/ThemeProvider';
+
+export type AdminThemeMode = Theme;
 
 interface AdminThemeContextType {
-  tokens: ThemeTokenConfig;
-  activePresetId: string | null;
-  presets: ThemePresetOption[];
-  updateTokens: (partial: Partial<ThemeTokenConfig>) => void;
-  applyPreset: (presetId: string) => void;
+  mode: AdminThemeMode;
+  tokens: ThemeTokens;
+  toggleMode: () => void;
+  setMode: (mode: AdminThemeMode) => void;
+  updateTokens: (partial: Partial<ThemeTokens>) => void;
   resetTokens: () => void;
 }
 
 const AdminThemeContext = createContext<AdminThemeContextType | undefined>(undefined);
 
 export const AdminThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tokens, setTokens] = useState<ThemeTokenConfig>(() => settingsService.getThemeTokens());
-  const [activePresetId, setActivePresetId] = useState<string | null>('maestro-gold');
+  const { theme, toggleTheme, setTheme } = useTheme();
+  const [tokens, setTokens] = useState<ThemeTokens>(() => settingsRepository.getThemeTokens());
 
   useEffect(() => {
-    settingsService.applyTokensToDom(tokens);
-  }, [tokens]);
+    const handleUpdate = () => {
+      setTokens(settingsRepository.getThemeTokens());
+    };
+    window.addEventListener(THEME_UPDATED_EVENT, handleUpdate);
+    return () => window.removeEventListener(THEME_UPDATED_EVENT, handleUpdate);
+  }, []);
 
-  const updateTokens = (partial: Partial<ThemeTokenConfig>) => {
-    const updated = { ...tokens, ...partial };
+  const updateTokens = (partial: Partial<ThemeTokens>) => {
+    const updated = settingsRepository.saveThemeTokens(partial);
     setTokens(updated);
-    settingsService.saveThemeTokens(updated);
-    setActivePresetId(null);
-  };
-
-  const applyPreset = (presetId: string) => {
-    const preset = THEME_PRESETS.find((p) => p.id === presetId);
-    if (preset) {
-      setTokens(preset.tokens);
-      settingsService.saveThemeTokens(preset.tokens);
-      setActivePresetId(presetId);
-    }
   };
 
   const resetTokens = () => {
-    const defaultPreset = THEME_PRESETS[0];
-    setTokens(defaultPreset.tokens);
-    settingsService.saveThemeTokens(defaultPreset.tokens);
-    setActivePresetId(defaultPreset.id);
+    const res = settingsRepository.resetThemeTokens();
+    setTokens(res);
   };
 
   return (
     <AdminThemeContext.Provider
       value={{
+        mode: theme,
         tokens,
-        activePresetId,
-        presets: THEME_PRESETS,
+        toggleMode: toggleTheme,
+        setMode: setTheme,
         updateTokens,
-        applyPreset,
         resetTokens,
       }}
     >
@@ -60,10 +55,10 @@ export const AdminThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 };
 
-export const useAdminTheme = () => {
-  const ctx = useContext(AdminThemeContext);
-  if (!ctx) {
+export const useAdminTheme = (): AdminThemeContextType => {
+  const context = useContext(AdminThemeContext);
+  if (!context) {
     throw new Error('useAdminTheme must be used within an AdminThemeProvider');
   }
-  return ctx;
+  return context;
 };

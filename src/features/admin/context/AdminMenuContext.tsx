@@ -1,133 +1,164 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { AdminDishItem, AdminCategoryItem, DishFormData, CategoryFormData } from '../types/menu.types';
-import { menuService, MENU_UPDATED_EVENT } from '../services/menuService';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import type {
+  AdminMealItem,
+  CategoryItem,
+  MealFormData,
+  CategoryFormData,
+  MenuStatusFilter,
+  MenuTagFilter,
+} from '../types/menu.types';
+import { menuRepository, MENU_UPDATED_EVENT } from '../services/menuRepository';
+import { menuService } from '../services/menuService';
 
 interface AdminMenuContextType {
-  dishes: AdminDishItem[];
-  categories: AdminCategoryItem[];
+  dishes: AdminMealItem[];
+  categories: CategoryItem[];
   selectedCategoryId: string;
-  searchQuery: string;
-  availabilityFilter: 'all' | 'available' | 'unavailable';
-  isLoading: boolean;
   setSelectedCategoryId: (id: string) => void;
+  searchQuery: string;
   setSearchQuery: (query: string) => void;
-  setAvailabilityFilter: (filter: 'all' | 'available' | 'unavailable') => void;
-  saveDish: (data: DishFormData, id?: string) => Promise<AdminDishItem>;
-  deleteDish: (id: string) => Promise<boolean>;
-  toggleAvailability: (id: string) => Promise<void>;
-  saveCategory: (data: CategoryFormData, id?: string) => Promise<AdminCategoryItem>;
-  deleteCategory: (id: string) => Promise<boolean>;
-  resetToDefault: () => void;
-  filteredDishes: AdminDishItem[];
+  statusFilter: MenuStatusFilter;
+  setStatusFilter: (filter: MenuStatusFilter) => void;
+  tagFilter: MenuTagFilter;
+  setTagFilter: (filter: MenuTagFilter) => void;
+  filteredDishes: AdminMealItem[];
+  // CRUD
+  saveDish: (formData: MealFormData) => AdminMealItem;
+  deleteDish: (id: string) => boolean;
+  toggleDishAvailability: (id: string) => void;
+  saveCategory: (formData: CategoryFormData) => CategoryItem;
+  deleteCategory: (id: string) => boolean;
+  // Stats
+  totalDishesCount: number;
+  availableDishesCount: number;
+  categoriesCount: number;
 }
 
 const AdminMenuContext = createContext<AdminMenuContextType | undefined>(undefined);
 
 export const AdminMenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [dishes, setDishes] = useState<AdminDishItem[]>([]);
-  const [categories, setCategories] = useState<AdminCategoryItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>(() => menuRepository.getCategories());
+  const [dishes, setDishes] = useState<AdminMealItem[]>(() => menuRepository.getDishes());
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available' | 'unavailable'>('all');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [statusFilter, setStatusFilter] = useState<MenuStatusFilter>('all');
+  const [tagFilter, setTagFilter] = useState<MenuTagFilter>('all');
 
-  const loadData = useCallback(() => {
-    setIsLoading(true);
-    try {
-      const cats = menuService.getCategories();
-      const items = menuService.getDishes();
-      setCategories(cats);
-      setDishes(items);
-    } finally {
-      setIsLoading(false);
-    }
+  const refreshData = useCallback(() => {
+    setCategories(menuRepository.getCategories());
+    setDishes(menuRepository.getDishes());
   }, []);
 
   useEffect(() => {
-    loadData();
-    const handleUpdate = () => loadData();
-    window.addEventListener(MENU_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(MENU_UPDATED_EVENT, handleUpdate);
-  }, [loadData]);
+    window.addEventListener(MENU_UPDATED_EVENT, refreshData);
+    return () => window.removeEventListener(MENU_UPDATED_EVENT, refreshData);
+  }, [refreshData]);
 
-  const saveDish = async (data: DishFormData, id?: string) => {
-    const saved = menuService.saveDish(data, id);
-    loadData();
-    return saved;
-  };
+  // Compute item counts for categories
+  const categoriesWithCounts = useMemo(() => {
+    return categories.map((cat) => ({
+      ...cat,
+      itemCount: dishes.filter((d) => d.categoryId === cat.id).length,
+    }));
+  }, [categories, dishes]);
 
-  const deleteDish = async (id: string) => {
-    const success = menuService.deleteDish(id);
-    loadData();
-    return success;
-  };
-
-  const toggleAvailability = async (id: string) => {
-    menuService.toggleDishAvailability(id);
-    loadData();
-  };
-
-  const saveCategory = async (data: CategoryFormData, id?: string) => {
-    const saved = menuService.saveCategory(data, id);
-    loadData();
-    return saved;
-  };
-
-  const deleteCategory = async (id: string) => {
-    const success = menuService.deleteCategory(id);
-    if (selectedCategoryId === id) {
-      setSelectedCategoryId('all');
-    }
-    loadData();
-    return success;
-  };
-
-  const resetToDefault = () => {
-    menuService.resetMenuToDefault();
-    loadData();
-  };
-
+  // Filtered dishes
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => {
       // Category filter
       if (selectedCategoryId !== 'all' && dish.categoryId !== selectedCategoryId) {
         return false;
       }
-      // Availability filter
-      if (availabilityFilter === 'available' && !dish.isAvailable) return false;
-      if (availabilityFilter === 'unavailable' && dish.isAvailable) return false;
-      // Search query
+
+      // Status filter
+      if (statusFilter === 'available' && !dish.isAvailable) return false;
+      if (statusFilter === 'unavailable' && dish.isAvailable) return false;
+
+      // Tag filter
+      if (tagFilter === 'signature' && !dish.isSignature) return false;
+      if (tagFilter === 'spicy' && !dish.isSpicy) return false;
+      if (tagFilter === 'bestseller' && !dish.isBestseller) return false;
+
+      // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchAr = dish.nameAr.toLowerCase().includes(q);
-        const matchEn = dish.nameEn.toLowerCase().includes(q);
-        const matchDescAr = dish.descriptionAr.toLowerCase().includes(q);
-        const matchDescEn = dish.descriptionEn.toLowerCase().includes(q);
-        return matchAr || matchEn || matchDescAr || matchDescEn;
+        const matchAr = dish.nameAr.toLowerCase().includes(q) || dish.descriptionAr.toLowerCase().includes(q);
+        const matchEn = dish.nameEn.toLowerCase().includes(q) || dish.descriptionEn.toLowerCase().includes(q);
+        if (!matchAr && !matchEn) return false;
       }
+
       return true;
     });
-  }, [dishes, selectedCategoryId, availabilityFilter, searchQuery]);
+  }, [dishes, selectedCategoryId, statusFilter, tagFilter, searchQuery]);
+
+  const saveDish = (formData: MealFormData): AdminMealItem => {
+    const saved = menuRepository.saveDish(formData);
+    menuService.saveDish(formData).catch(console.warn);
+    refreshData();
+    return saved;
+  };
+
+  const deleteDish = (id: string): boolean => {
+    const success = menuRepository.deleteDish(id);
+    if (success) {
+      menuService.deleteDish(id).catch(console.warn);
+      refreshData();
+    }
+    return success;
+  };
+
+  const toggleDishAvailability = (id: string) => {
+    menuRepository.toggleDishAvailability(id);
+    menuService.toggleDishAvailability(id).catch(console.warn);
+    refreshData();
+  };
+
+  const saveCategory = (formData: CategoryFormData): CategoryItem => {
+    const saved = menuRepository.saveCategory(formData);
+    menuService.saveCategory(formData).catch(console.warn);
+    refreshData();
+    return saved;
+  };
+
+  const deleteCategory = (id: string): boolean => {
+    const success = menuRepository.deleteCategory(id);
+    if (success) {
+      menuService.deleteCategory(id).catch(console.warn);
+      if (selectedCategoryId === id) {
+        setSelectedCategoryId('all');
+      }
+      refreshData();
+    }
+    return success;
+  };
+
+  const totalDishesCount = dishes.length;
+  const availableDishesCount = dishes.filter((d) => d.isAvailable).length;
+  const categoriesCount = categories.length;
 
   return (
     <AdminMenuContext.Provider
       value={{
         dishes,
-        categories,
+        categories: categoriesWithCounts,
         selectedCategoryId,
-        searchQuery,
-        availabilityFilter,
-        isLoading,
         setSelectedCategoryId,
+        searchQuery,
         setSearchQuery,
-        setAvailabilityFilter,
+        statusFilter,
+        setStatusFilter,
+        tagFilter,
+        setTagFilter,
+        filteredDishes,
         saveDish,
         deleteDish,
-        toggleAvailability,
+        toggleDishAvailability,
         saveCategory,
         deleteCategory,
-        resetToDefault,
-        filteredDishes,
+        totalDishesCount,
+        availableDishesCount,
+        categoriesCount,
       }}
     >
       {children}
@@ -135,10 +166,10 @@ export const AdminMenuProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 };
 
-export const useAdminMenu = () => {
-  const ctx = useContext(AdminMenuContext);
-  if (!ctx) {
-    throw new Error('useAdminMenu must be used within an AdminMenuProvider');
+export const useAdminMenuContext = (): AdminMenuContextType => {
+  const context = useContext(AdminMenuContext);
+  if (!context) {
+    throw new Error('useAdminMenuContext must be used within an AdminMenuProvider');
   }
-  return ctx;
+  return context;
 };

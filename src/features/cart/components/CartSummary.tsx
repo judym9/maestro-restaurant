@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart';
 import { createOrder } from '../services/ordersService';
 import { formatSYP } from '../../../utils/currency';
 import { useLanguage } from '../../../app/providers/LanguageProvider';
+import { useSiteSettings } from '../../settings/context/SiteSettingsContext';
 import { Button } from '../../../common/components/Button/Button';
 import './CartSummary.css';
 
@@ -18,6 +19,8 @@ export interface CartSummaryProps {
 export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
   const { items, subtotal, deliveryFee = 0, grandTotal, total, clearCart, checkoutViaWhatsApp } = useCart();
   const { language, isRtl, t } = useLanguage();
+  const { settings } = useSiteSettings();
+  const isKitchenOpen = settings.is_restaurant_open;
 
   const finalTotal = grandTotal ?? total ?? subtotal;
 
@@ -138,6 +141,21 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
         </span>
       </div>
 
+      {/* Kitchen Closed Notice */}
+      {!isKitchenOpen && (
+        <div
+          className="cart-summary-badge-line"
+          style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            borderColor: 'rgba(239, 68, 68, 0.25)',
+            color: 'var(--crimson-500, #ef4444)',
+            fontWeight: 700,
+          }}
+        >
+          <span>⚠️ {isRtl ? 'المطعم مغلق حالياً - لا يمكن إتمام الطلب الآن' : 'Kitchen is currently closed for new orders'}</span>
+        </div>
+      )}
+
       {/* Checkout Form or Action Buttons */}
       {isCheckoutMode ? (
         <form className="checkout-form-box animate-fade-in" onSubmit={handlePlaceOrder}>
@@ -222,6 +240,7 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
               size="md"
               leftIcon={<CheckCircle2 size={18} />}
               isLoading={isSubmitting}
+              disabled={!isKitchenOpen || isSubmitting}
               className="flex-grow"
             >
               {isSubmitting ? t.common.cart.placingOrder : t.common.cart.placeOrderBtn}
@@ -237,6 +256,7 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
             size="md"
             onClick={() => setIsCheckoutMode(true)}
             leftIcon={<CheckCircle2 size={18} />}
+            disabled={!isKitchenOpen}
           >
             {t.common.cart.proceedToCheckout}
           </Button>
@@ -246,6 +266,8 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
             type="button"
             className="whatsapp-checkout-btn"
             onClick={checkoutViaWhatsApp}
+            disabled={!isKitchenOpen}
+            style={!isKitchenOpen ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
             <MessageCircle size={20} />
             <span>{t.common.cart.checkoutWhatsApp}</span>

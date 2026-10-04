@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, X, Flame, Award, UtensilsCrossed } from 'lucide-react';
 import { getMeals, getActiveMenuCategories } from './services/mealsService';
-import { MENU_UPDATED_EVENT } from '../admin/services/menuService';
+import { MENU_UPDATED_EVENT } from '../admin/services/menuRepository';
 import type { MealItem } from './mealsData';
 import type { CategoryRow } from '../../types/database.types';
 import { MealCard } from './MealCard';

@@ -1,40 +1,32 @@
-export interface BusinessInfo {
+export interface BranchContactInfo {
   restaurantNameAr: string;
   restaurantNameEn: string;
-  phone: string;
-  whatsapp: string;
+  phonePrimary: string;
+  phoneSecondary: string;
+  whatsappNumber: string;
   addressAr: string;
   addressEn: string;
-  mapsEmbedUrl: string;
-  deliveryTimeEstimateAr: string;
-  deliveryTimeEstimateEn: string;
-  deliveryFee: number;
-  minimumOrder: number;
-}
-
-export interface OperatingStatus {
-  isOpen: boolean;
-  bannerNoticeAr: string;
-  bannerNoticeEn: string;
+  googleMapsUrl: string;
   workingHoursAr: string;
   workingHoursEn: string;
 }
 
-export interface ThemeTokenConfig {
+export interface OperatingSchedule {
+  isOpen: boolean;
+  autoToggle: boolean;
+  openingTime: string;
+  closingTime: string;
+  emergencyNoticeAr: string;
+  emergencyNoticeEn: string;
+  showEmergencyBanner: boolean;
+}
+
+export interface ThemeTokens {
   primaryAccent: string;
   darkBg: string;
   darkSurface: string;
+  darkBorder: string;
   lightBg: string;
   lightSurface: string;
-  darkBorder?: string;
-  lightBorder?: string;
-}
-
-export interface ThemePresetOption {
-  id: string;
-  nameAr: string;
-  nameEn: string;
-  descAr: string;
-  descEn: string;
-  tokens: ThemeTokenConfig;
+  lightBorder: string;
 }

@@ -3,6 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Immediate System Theme & Language Bootstrap (Zero FOUC) -->
+    <script>
+      (function() {
+        try {
+          // 1. Language Detection & Initialization
+          var savedLang = localStorage.getItem('mastro_locale') || localStorage.getItem('locale') || localStorage.getItem('language');
+          var lang = savedLang;
+          if (lang !== 'ar' && lang !== 'en') {
+            var navLangs = navigator.languages || [navigator.language || ''];
+            var primaryLang = (navLangs[0] || '').toLowerCase();
+            lang = primaryLang.startsWith('ar') ? 'ar' : 'en';
+          }
+          document.documentElement.lang = lang;
+          document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+          // 2. Theme Detection & Initialization
+          var savedTheme = localStorage.getItem('theme') || localStorage.getItem('mastro_theme') || localStorage.getItem('maestro_admin_theme_mode');
+          var theme = savedTheme;
+          if (theme !== 'dark' && theme !== 'light') {
+            var mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+            theme = (mql && mql.matches) ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.add(theme);
+          document.documentElement.classList.remove(theme === 'dark' ? 'light' : 'dark');
+        } catch (e) {}
+      })();
+    </script>
     <title>مطعم مايسترو | MAESTRO Restaurant - النبك، شارع أمين</title>
     <meta name="description" content="مطعم مايسترو في النبك - شارع أمين (Al-Nabek, Amin Street): أفخر أصناف الشاورما الشامية الأصيلة، الدجاج البروستد الذهبي، وجبات البرنسس والسوبريم، وأبراج وتورتات الشاورما للمناسبات. التوصيل متاح في النبك وما حولها." />
     

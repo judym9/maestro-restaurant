@@ -1,152 +1,225 @@
-import type { BusinessInfo, OperatingStatus, ThemeTokenConfig, ThemePresetOption } from '../types/settings.types';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase/client';
+import { settingsRepository, SETTINGS_UPDATED_EVENT } from './settingsRepository';
+import type { RestaurantSettingsRow } from '../../../types/database.types';
 
-const STORAGE_BUSINESS_KEY = 'maestro_admin_business_info';
-const STORAGE_STATUS_KEY = 'maestro_admin_operating_status';
-const STORAGE_THEME_KEY = 'maestro_admin_theme_tokens';
-
-export const DEFAULT_BUSINESS_INFO: BusinessInfo = {
-  restaurantNameAr: 'مطعم مايسترو',
-  restaurantNameEn: 'Maestro Restaurant',
-  phone: '011-7247721',
-  whatsapp: '0969697587',
-  addressAr: 'سوريا، ريف دمشق، النبك، شارع أمين',
-  addressEn: 'Amin Street, Al-Nabek, Rural Damascus, Syria',
-  mapsEmbedUrl: 'https://maps.google.com/maps?q=Al-Nabek%20Syria&t=&z=15&ie=UTF8&iwloc=&output=embed',
-  deliveryTimeEstimateAr: '20 - 35 دقيقة',
-  deliveryTimeEstimateEn: '20 - 35 mins',
-  deliveryFee: 15000,
-  minimumOrder: 50000,
-};
-
-export const DEFAULT_OPERATING_STATUS: OperatingStatus = {
-  isOpen: true,
-  bannerNoticeAr: 'المطعم يستقبل طلباتكم بكل حب - توصيل سريع لجميع أحياء النبك وما حولها',
-  bannerNoticeEn: 'Warmly accepting orders - Fast delivery across Al-Nabek and surrounding areas',
-  workingHoursAr: 'يومياً من 11:00 صباحاً حتى 2:00 بعد منتصف الليل',
-  workingHoursEn: 'Daily from 11:00 AM to 2:00 AM',
-};
-
-export const THEME_PRESETS: ThemePresetOption[] = [
-  {
-    id: 'maestro-gold',
-    nameAr: 'مايسترو الذهبي الملكي (الافتراضي)',
-    nameEn: 'Maestro Royal Amber Gold (Default)',
-    descAr: 'توهج العنبر الذهبي الفاخر مع خلفية أوبسيديان مخملية راقية',
-    descEn: 'Iconic warm golden amber accents paired with deep obsidian slate',
-    tokens: {
-      primaryAccent: '#F59E0B',
-      darkBg: '#090d16',
-      darkSurface: '#0f172a',
-      lightBg: '#F8FAFC',
-      lightSurface: '#FFFFFF',
-      darkBorder: 'rgba(245, 158, 11, 0.2)',
-      lightBorder: 'rgba(245, 158, 11, 0.25)',
-    },
-  },
-  {
-    id: 'royal-emerald',
-    nameAr: 'الزمرد الشامي الراقي',
-    nameEn: 'Royal Damascus Emerald',
-    descAr: 'لمسات زمردية منعشة تعكس نقاء المكونات والأصالة',
-    descEn: 'Fresh culinary emerald tones with deep forest charcoal surfaces',
-    tokens: {
-      primaryAccent: '#10B981',
-      darkBg: '#06130E',
-      darkSurface: '#0F241C',
-      lightBg: '#F2F8F5',
-      lightSurface: '#FFFFFF',
-      darkBorder: 'rgba(16, 185, 129, 0.2)',
-      lightBorder: 'rgba(16, 185, 129, 0.25)',
-    },
-  },
-  {
-    id: 'crimson-fire',
-    nameAr: 'اللهب القرمزي للشاورما',
-    nameEn: 'Crimson Flame Shawarma',
-    descAr: 'حيوية نارية حارة تناسب أطباق الشاورما والبروستد الذهبي المقرمش',
-    descEn: 'Vibrant fiery crimson hues highlighting sizzling spit-roasted specialties',
-    tokens: {
-      primaryAccent: '#E11D48',
-      darkBg: '#12080B',
-      darkSurface: '#221016',
-      lightBg: '#FFF5F6',
-      lightSurface: '#FFFFFF',
-      darkBorder: 'rgba(225, 29, 72, 0.2)',
-      lightBorder: 'rgba(225, 29, 72, 0.25)',
-    },
-  },
-  {
-    id: 'sapphire-night',
-    nameAr: 'الياقوت الليلي الفاخر',
-    nameEn: 'Midnight Sapphire Elegance',
-    descAr: 'فخامة ملكية زرقاء عالية التباين للمناسبات الخاصة',
-    descEn: 'Prestigious midnight sapphire blue with pristine high-contrast surfaces',
-    tokens: {
-      primaryAccent: '#3B82F6',
-      darkBg: '#080F1E',
-      darkSurface: '#101C33',
-      lightBg: '#F0F5FF',
-      lightSurface: '#FFFFFF',
-      darkBorder: 'rgba(59, 130, 246, 0.2)',
-      lightBorder: 'rgba(59, 130, 246, 0.25)',
-    },
-  },
-];
-
-class SettingsService {
-  public getBusinessInfo(): BusinessInfo {
-    if (typeof window === 'undefined') return DEFAULT_BUSINESS_INFO;
-    try {
-      const stored = localStorage.getItem(STORAGE_BUSINESS_KEY);
-      if (stored) return { ...DEFAULT_BUSINESS_INFO, ...JSON.parse(stored) };
-    } catch {}
-    return DEFAULT_BUSINESS_INFO;
-  }
-
-  public saveBusinessInfo(info: Partial<BusinessInfo>): BusinessInfo {
-    const current = this.getBusinessInfo();
-    const updated = { ...current, ...info };
-    localStorage.setItem(STORAGE_BUSINESS_KEY, JSON.stringify(updated));
-    return updated;
-  }
-
-  public getOperatingStatus(): OperatingStatus {
-    if (typeof window === 'undefined') return DEFAULT_OPERATING_STATUS;
-    try {
-      const stored = localStorage.getItem(STORAGE_STATUS_KEY);
-      if (stored) return { ...DEFAULT_OPERATING_STATUS, ...JSON.parse(stored) };
-    } catch {}
-    return DEFAULT_OPERATING_STATUS;
-  }
-
-  public saveOperatingStatus(status: Partial<OperatingStatus>): OperatingStatus {
-    const current = this.getOperatingStatus();
-    const updated = { ...current, ...status };
-    localStorage.setItem(STORAGE_STATUS_KEY, JSON.stringify(updated));
-    return updated;
-  }
-
-  public getThemeTokens(): ThemeTokenConfig {
-    if (typeof window === 'undefined') return THEME_PRESETS[0].tokens;
-    try {
-      const stored = localStorage.getItem(STORAGE_THEME_KEY);
-      if (stored) return { ...THEME_PRESETS[0].tokens, ...JSON.parse(stored) };
-    } catch {}
-    return THEME_PRESETS[0].tokens;
-  }
-
-  public saveThemeTokens(tokens: ThemeTokenConfig): ThemeTokenConfig {
-    localStorage.setItem(STORAGE_THEME_KEY, JSON.stringify(tokens));
-    this.applyTokensToDom(tokens);
-    return tokens;
-  }
-
-  public applyTokensToDom(tokens: ThemeTokenConfig) {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    root.style.setProperty('--accent-gold', tokens.primaryAccent);
-    root.style.setProperty('--border-active', tokens.primaryAccent);
-  }
+export interface AdminRestaurantSettings {
+  id: number;
+  isKitchenOpen: boolean;
+  deliveryTimeAr: string;
+  deliveryTimeEn: string;
+  announcementBannerActive: boolean;
+  announcementBannerTextAr: string;
+  announcementBannerTextEn: string;
+  phone: string;
+  whatsapp: string;
+  addressAr: string;
+  addressEn: string;
+  updatedAt: string;
 }
 
-export const settingsService = new SettingsService();
+export const SETTINGS_SERVICE_UPDATED_EVENT = 'maestro:settings-service-updated';
+
+export const DEFAULT_RESTAURANT_SETTINGS: AdminRestaurantSettings = {
+  id: 1,
+  isKitchenOpen: true,
+  deliveryTimeAr: '30 - 45 دقيقة',
+  deliveryTimeEn: '30 - 45 mins',
+  announcementBannerActive: false,
+  announcementBannerTextAr: 'نستقبل طلباتكم الآن مع خدمة التوصيل السريع في النبك وما حولها',
+  announcementBannerTextEn: 'Now accepting orders with express delivery in Al-Nabek and surrounding areas',
+  phone: '7247721',
+  whatsapp: '0969697587',
+  addressAr: 'سوريا، النبك، شارع أمين',
+  addressEn: 'Syria, Al-Nabek, Amin Street',
+  updatedAt: new Date().toISOString(),
+};
+
+const emitSettingsUpdated = (settings: AdminRestaurantSettings) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(SETTINGS_SERVICE_UPDATED_EVENT, { detail: settings }));
+    window.dispatchEvent(new CustomEvent(SETTINGS_UPDATED_EVENT, { detail: settings }));
+  }
+};
+
+/**
+ * Service for restaurant settings and operating state with Supabase and local cache fallback
+ */
+export const settingsService = {
+  /**
+   * Fetches the current restaurant settings
+   */
+  async fetchSettings(): Promise<AdminRestaurantSettings> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('restaurant_settings')
+          .select('*')
+          .eq('id', 1)
+          .maybeSingle();
+
+        if (!error && data) {
+          const row = data as RestaurantSettingsRow;
+          const mapped: AdminRestaurantSettings = {
+            id: row.id,
+            isKitchenOpen: row.is_kitchen_open,
+            deliveryTimeAr: row.delivery_time_ar,
+            deliveryTimeEn: row.delivery_time_en,
+            announcementBannerActive: row.announcement_banner_active,
+            announcementBannerTextAr: row.announcement_banner_text_ar,
+            announcementBannerTextEn: row.announcement_banner_text_en,
+            phone: row.phone || DEFAULT_RESTAURANT_SETTINGS.phone,
+            whatsapp: row.whatsapp || DEFAULT_RESTAURANT_SETTINGS.whatsapp,
+            addressAr: row.address_ar || DEFAULT_RESTAURANT_SETTINGS.addressAr,
+            addressEn: row.address_en || DEFAULT_RESTAURANT_SETTINGS.addressEn,
+            updatedAt: row.updated_at,
+          };
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('[settingsService] Supabase fetchSettings failed, using fallback:', err);
+      }
+    }
+
+    // Fallback: sync with local repository
+    const localContact = settingsRepository.getContactInfo();
+    const localOperating = settingsRepository.getOperatingSchedule();
+
+    return {
+      ...DEFAULT_RESTAURANT_SETTINGS,
+      isKitchenOpen: localOperating.isOpen,
+      phone: localContact.phonePrimary || DEFAULT_RESTAURANT_SETTINGS.phone,
+      whatsapp: localContact.whatsappNumber || DEFAULT_RESTAURANT_SETTINGS.whatsapp,
+      addressAr: localContact.addressAr || DEFAULT_RESTAURANT_SETTINGS.addressAr,
+      addressEn: localContact.addressEn || DEFAULT_RESTAURANT_SETTINGS.addressEn,
+    };
+  },
+
+  /**
+   * Updates restaurant settings in Supabase and local cache
+   */
+  async updateSettings(partial: Partial<AdminRestaurantSettings>): Promise<AdminRestaurantSettings> {
+    const current = await this.fetchSettings();
+    const updated: AdminRestaurantSettings = {
+      ...current,
+      ...partial,
+      // Lock official Al-Nabek defaults if cleared
+      phone: partial.phone || current.phone || DEFAULT_RESTAURANT_SETTINGS.phone,
+      whatsapp: partial.whatsapp || current.whatsapp || DEFAULT_RESTAURANT_SETTINGS.whatsapp,
+      addressAr: partial.addressAr || current.addressAr || DEFAULT_RESTAURANT_SETTINGS.addressAr,
+      addressEn: partial.addressEn || current.addressEn || DEFAULT_RESTAURANT_SETTINGS.addressEn,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        const payload: Partial<RestaurantSettingsRow> = {
+          id: 1,
+          is_kitchen_open: updated.isKitchenOpen,
+          delivery_time_ar: updated.deliveryTimeAr,
+          delivery_time_en: updated.deliveryTimeEn,
+          announcement_banner_active: updated.announcementBannerActive,
+          announcement_banner_text_ar: updated.announcementBannerTextAr,
+          announcement_banner_text_en: updated.announcementBannerTextEn,
+          phone: updated.phone,
+          whatsapp: updated.whatsapp,
+          address_ar: updated.addressAr,
+          address_en: updated.addressEn,
+          updated_at: updated.updatedAt,
+        };
+
+        const { error } = await supabase
+          .from('restaurant_settings')
+          .upsert(payload as any);
+
+        if (error) {
+          console.warn('[settingsService] Supabase update error:', error.message);
+        }
+
+        // Also sync site_settings for backward compatibility
+        await supabase
+          .from('site_settings')
+          .update({
+            is_restaurant_open: updated.isKitchenOpen,
+            banner_enabled: updated.announcementBannerActive,
+            banner_text_ar: updated.announcementBannerTextAr,
+            banner_text_en: updated.announcementBannerTextEn,
+            primary_phone: updated.phone,
+            whatsapp_number: updated.whatsapp,
+            address_ar: updated.addressAr,
+            address_en: updated.addressEn,
+            delivery_estimate_ar: updated.deliveryTimeAr,
+            delivery_estimate_en: updated.deliveryTimeEn,
+          })
+          .eq('id', 'primary');
+      } catch (err) {
+        console.warn('[settingsService] Supabase update exception:', err);
+      }
+    }
+
+    // Sync with local repository
+    settingsRepository.saveContactInfo({
+      phonePrimary: updated.phone,
+      whatsappNumber: updated.whatsapp,
+      addressAr: updated.addressAr,
+      addressEn: updated.addressEn,
+    });
+
+    settingsRepository.saveOperatingSchedule({
+      isOpen: updated.isKitchenOpen,
+      showEmergencyBanner: updated.announcementBannerActive,
+      emergencyNoticeAr: updated.announcementBannerTextAr,
+      emergencyNoticeEn: updated.announcementBannerTextEn,
+    });
+
+    emitSettingsUpdated(updated);
+    return updated;
+  },
+
+  /**
+   * Toggles kitchen open status
+   */
+  async toggleKitchenStatus(isOpen: boolean): Promise<AdminRestaurantSettings> {
+    return this.updateSettings({ isKitchenOpen: isOpen });
+  },
+
+  /**
+   * Updates announcement banner
+   */
+  async updateAnnouncementBanner(
+    active: boolean,
+    textAr?: string,
+    textEn?: string
+  ): Promise<AdminRestaurantSettings> {
+    const updatePayload: Partial<AdminRestaurantSettings> = { announcementBannerActive: active };
+    if (textAr !== undefined) updatePayload.announcementBannerTextAr = textAr;
+    if (textEn !== undefined) updatePayload.announcementBannerTextEn = textEn;
+    return this.updateSettings(updatePayload);
+  },
+
+  /**
+   * Updates delivery estimate
+   */
+  async updateDeliveryTime(timeAr: string, timeEn: string): Promise<AdminRestaurantSettings> {
+    return this.updateSettings({
+      deliveryTimeAr: timeAr,
+      deliveryTimeEn: timeEn,
+    });
+  },
+
+  /**
+   * Updates contact information
+   */
+  async updateContactInfo(
+    phone: string,
+    whatsapp: string,
+    addressAr: string,
+    addressEn: string
+  ): Promise<AdminRestaurantSettings> {
+    return this.updateSettings({
+      phone,
+      whatsapp,
+      addressAr,
+      addressEn,
+    });
+  },
+};

@@ -21,52 +21,124 @@ const dictionaries: Record<Language, Translations> = {
   en: { common: enCommon, menu: enMenu, home: enHome },
 };
 
-interface LanguageContextType {
+export interface LanguageContextType {
   language: Language;
   isRtl: boolean;
+  isSystemLanguage: boolean;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
+  resetToSystemLanguage: () => void;
   t: Translations;
 }
 
 const PRIMARY_LOCALE_KEY = 'mastro_locale';
+const LEGACY_LOCALE_KEYS = ['locale', 'language', 'maestro_language'];
 
 /**
- * Resolves initial language with the order:
- * 1. Saved preference in localStorage ('mastro_locale')
- * 2. System/Browser preferred language ((navigator.languages && navigator.languages[0]) || navigator.language)
- *    - if starts with 'ar' (e.g. 'ar', 'ar-EG', 'ar-SY') -> 'ar'
- *    - otherwise -> 'en'
+ * Checks for explicitly saved language preference in localStorage
  */
-const getInitialLanguage = (): 'ar' | 'en' => {
+export const getSavedLanguage = (): Language | null => {
+  if (typeof window === 'undefined') return null;
   try {
-    const saved = localStorage.getItem('mastro_locale');
+    const saved = localStorage.getItem(PRIMARY_LOCALE_KEY);
     if (saved === 'ar' || saved === 'en') return saved;
+    for (const key of LEGACY_LOCALE_KEYS) {
+      const val = localStorage.getItem(key);
+      if (val === 'ar' || val === 'en') return val;
+    }
   } catch (err) {
     console.warn('[LanguageProvider] Unable to read localStorage:', err);
   }
+  return null;
+};
 
-  const systemLang = (
-    (navigator.languages && navigator.languages[0]) ||
-    navigator.language ||
-    ''
-  ).toLowerCase();
+/**
+ * Detects device/browser language using navigator.language or navigator.languages:
+ * - If the language starts with 'ar', returns 'ar' (Arabic) with dir="rtl"
+ * - Otherwise (or if English is detected), returns 'en' (English) with dir="ltr"
+ */
+export const getSystemLanguage = (): Language => {
+  if (typeof navigator === 'undefined') return 'ar';
 
-  return systemLang.startsWith('ar') ? 'ar' : 'en';
+  const navLangs: readonly string[] = (navigator.languages && navigator.languages.length > 0)
+    ? navigator.languages
+    : [navigator.language || (navigator as any).userLanguage || ''];
+
+  for (const lang of navLangs) {
+    if (typeof lang === 'string' && lang.trim()) {
+      const lower = lang.toLowerCase().trim();
+      if (lower.startsWith('ar')) return 'ar';
+      if (lower.startsWith('en')) return 'en';
+    }
+  }
+
+  const primary = (navigator.language || (navigator as any).userLanguage || '').toLowerCase().trim();
+  if (primary.startsWith('ar')) return 'ar';
+
+  return 'en';
+};
+
+/**
+ * Resolves initial language with the order:
+ * 1. Explicitly saved preference in localStorage
+ * 2. System/Browser preferred language fallback
+ */
+export const getInitialLanguage = (): Language => {
+  const saved = getSavedLanguage();
+  if (saved) return saved;
+  return getSystemLanguage();
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentLang, setCurrentLang] = useState<'ar' | 'en'>(getInitialLanguage);
+  const [currentLang, setCurrentLang] = useState<Language>(getInitialLanguage);
+  const [hasManualOverride, setHasManualOverride] = useState<boolean>(() => getSavedLanguage() !== null);
 
   const isRtl = currentLang === 'ar';
 
   // Synchronize HTML attributes immediately upon mount and on language change
   useEffect(() => {
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    }
   }, [currentLang]);
+
+  // Real-time system language listener (updates when device/browser language changes and no manual override exists)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSystemLanguageChange = () => {
+      const saved = getSavedLanguage();
+      if (!saved) {
+        const detected = getSystemLanguage();
+        setCurrentLang(detected);
+      }
+    };
+
+    window.addEventListener('languagechange', handleSystemLanguageChange);
+
+    // Multi-tab and DevTools storage synchronization
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || e.key === PRIMARY_LOCALE_KEY || LEGACY_LOCALE_KEYS.includes(e.key)) {
+        const saved = getSavedLanguage();
+        if (saved) {
+          setHasManualOverride(true);
+          setCurrentLang(saved);
+        } else {
+          setHasManualOverride(false);
+          setCurrentLang(getSystemLanguage());
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('languagechange', handleSystemLanguageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const setLanguage = (lang: Language) => {
     try {
@@ -74,6 +146,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (err) {
       console.warn('[LanguageProvider] Failed to save locale preference:', err);
     }
+    setHasManualOverride(true);
     setCurrentLang(lang);
   };
 
@@ -85,8 +158,22 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (err) {
         console.warn('[LanguageProvider] Failed to save locale preference:', err);
       }
+      setHasManualOverride(true);
       return nextLang;
     });
+  };
+
+  const resetToSystemLanguage = () => {
+    try {
+      localStorage.removeItem(PRIMARY_LOCALE_KEY);
+      for (const k of LEGACY_LOCALE_KEYS) {
+        localStorage.removeItem(k);
+      }
+    } catch (err) {
+      console.warn('[LanguageProvider] Failed to clear locale override:', err);
+    }
+    setHasManualOverride(false);
+    setCurrentLang(getSystemLanguage());
   };
 
   const currentTranslations = dictionaries[currentLang];
@@ -96,8 +183,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         language: currentLang,
         isRtl,
+        isSystemLanguage: !hasManualOverride,
         setLanguage,
         toggleLanguage,
+        resetToSystemLanguage,
         t: currentTranslations,
       }}
     >

@@ -38,7 +38,7 @@ export const StorefrontPage: React.FC = () => {
 };
 
 /**
- * Main Application with Customer Storefront & Admin Routes
+ * Main Application with Customer Storefront & Administration Routes
  */
 export const App: React.FC = () => {
   return (
@@ -51,7 +51,7 @@ export const App: React.FC = () => {
                 {/* Public Customer Storefront */}
                 <Route path="/" element={<StorefrontPage />} />
 
-                {/* Administration Platform */}
+                {/* Executive Administration Platform */}
                 <Route path="/admin" element={<AdminDashboardPage />} />
 
                 {/* Catch-all redirect to storefront */}

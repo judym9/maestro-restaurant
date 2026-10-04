@@ -4,6 +4,7 @@ import { PROMOS_DATA } from '../../promotions/promosData';
 import type { PromoDeal } from '../../promotions/promosData';
 import type { CategoryRow } from '../../../types/database.types';
 import { menuService } from '../../admin/services/menuService';
+import { promotionsService } from '../../admin/services/promotionsService';
 
 export interface MealsServiceResponse<T> {
   data: T;
@@ -20,13 +21,14 @@ const DEFAULT_CATEGORIES: CategoryRow[] = [
 ];
 
 /**
- * Fetches all active categories
+ * Fetches all active categories dynamically from Supabase
  */
 export async function getActiveMenuCategories(): Promise<CategoryRow[]> {
   try {
-    const adminCats = menuService.getCategories().filter((c) => c.isActive);
-    if (adminCats && adminCats.length > 0) {
-      return adminCats.map((c) => ({
+    const cats = await menuService.fetchCategories();
+    const activeCats = cats.filter((c) => c.isActive);
+    if (activeCats && activeCats.length > 0) {
+      return activeCats.map((c) => ({
         id: c.id,
         name_ar: c.nameAr,
         name_en: c.nameEn,
@@ -36,13 +38,15 @@ export async function getActiveMenuCategories(): Promise<CategoryRow[]> {
         created_at: '',
       }));
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[mealsService] Error fetching categories, using fallback:', err);
+  }
 
   return DEFAULT_CATEGORIES;
 }
 
 /**
- * Fetches all available meals dynamically
+ * Fetches all available meals dynamically from Supabase
  */
 export async function getMeals(): Promise<MealsServiceResponse<MealItem[]>> {
   const fallbackMap = new Map<string, MealItem>();
@@ -56,9 +60,11 @@ export async function getMeals(): Promise<MealsServiceResponse<MealItem[]>> {
   categories.forEach((c) => categoriesMap.set(c.id, c.slug));
 
   try {
-    const adminDishes = menuService.getDishes().filter((d) => d.isAvailable);
-    if (adminDishes && adminDishes.length > 0) {
-      const mapped: MealItem[] = adminDishes.map((dish) => {
+    const dishes = await menuService.fetchMenuItems();
+    const availableDishes = dishes.filter((d) => d.isAvailable);
+
+    if (availableDishes && availableDishes.length > 0) {
+      const mapped: MealItem[] = availableDishes.map((dish) => {
         const categorySlug = categoriesMap.get(dish.categoryId) || 'shawarma';
         const existingLocal = fallbackMap.get(dish.nameEn) || fallbackMap.get(dish.imageKey);
 
@@ -72,10 +78,10 @@ export async function getMeals(): Promise<MealsServiceResponse<MealItem[]>> {
           descriptionEn: dish.descriptionEn,
           price: dish.price,
           originalPrice: dish.originalPrice,
-          isSignature: Boolean(dish.badge?.toLowerCase().includes('signature') || existingLocal?.isSignature),
-          isBestseller: Boolean(dish.badge?.toLowerCase().includes('best seller') || dish.badge?.toLowerCase().includes('popular') || existingLocal?.isBestseller),
-          isSpicy: Boolean(dish.badge?.toLowerCase().includes('spicy') || existingLocal?.isSpicy),
-          isNew: Boolean(dish.badge?.toLowerCase().includes('new') || existingLocal?.isNew),
+          isSignature: Boolean(dish.isSignature || existingLocal?.isSignature),
+          isBestseller: Boolean(dish.isBestseller || existingLocal?.isBestseller),
+          isSpicy: Boolean(dish.isSpicy || existingLocal?.isSpicy),
+          isNew: Boolean(dish.isNew || existingLocal?.isNew),
           rating: dish.rating || existingLocal?.rating || 4.9,
           reviewsCount: dish.reviewsCount || existingLocal?.reviewsCount || 120,
           ingredientsAr: dish.ingredientsAr || existingLocal?.ingredientsAr || ['مكونات مايسترو الطازجة', 'بهارات شامية أصيلة'],
@@ -85,26 +91,28 @@ export async function getMeals(): Promise<MealsServiceResponse<MealItem[]>> {
       });
       return { data: mapped, error: null, fromFallback: false };
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[mealsService] Error fetching dishes, using fallback:', err);
+  }
 
   return { data: MEALS_DATA, error: null, fromFallback: true };
 }
 
 /**
- * Fetches active promoted meals
+ * Fetches active promoted meals dynamically from Supabase
  */
 export async function getPromotions(): Promise<MealsServiceResponse<PromoDeal[]>> {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem('maestro_admin_promos');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const active = parsed.filter((p: PromoDeal) => p.isActive !== false);
-        if (active.length > 0) {
-          return { data: active, error: null, fromFallback: false };
-        }
-      }
-    } catch {}
+  try {
+    const deals = await promotionsService.fetchPromotions();
+    const active = deals.filter((p) => p.isActive);
+    if (active.length > 0) {
+      return { data: active, error: null, fromFallback: false };
+    }
+  } catch (err) {
+    console.warn('[mealsService] Error fetching promotions, using fallback:', err);
   }
-  return { data: PROMOS_DATA, error: null, fromFallback: true };
+
+  return { data: PROMOS_DATA, error: null, fromFallback: false };
 }
+
+

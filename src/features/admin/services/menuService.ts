@@ -1,177 +1,267 @@
-import { MEALS_DATA } from '../../menu/mealsData';
-import type { AdminCategoryItem, AdminDishItem, DishFormData, CategoryFormData } from '../types/menu.types';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase/client';
+import { menuRepository, MENU_UPDATED_EVENT } from './menuRepository';
+import type { AdminMealItem, CategoryItem, MealFormData, CategoryFormData } from '../types/menu.types';
+import type { CategoryRow, MenuItemRow } from '../../../types/database.types';
 
-export const MENU_UPDATED_EVENT = 'maestro:menu-updated';
+export const MENU_SERVICE_UPDATED_EVENT = 'maestro:menu-service-updated';
 
-const STORAGE_CATEGORIES_KEY = 'maestro_admin_categories';
-const STORAGE_DISHES_KEY = 'maestro_admin_dishes';
-
-export const INITIAL_CATEGORIES: AdminCategoryItem[] = [
-  { id: 'cat-towers', nameAr: 'أبراج وتورتات المناسبات', nameEn: 'Celebration Towers', slug: 'towers', sortOrder: 1, isActive: true },
-  { id: 'cat-shawarma', nameAr: 'شاورما مايسترو', nameEn: 'Maestro Shawarma', slug: 'shawarma', sortOrder: 2, isActive: true },
-  { id: 'cat-broasted', nameAr: 'بروستد ومقرمش', nameEn: 'Broasted & Crispy', slug: 'broasted', sortOrder: 3, isActive: true },
-  { id: 'cat-sandwiches', nameAr: 'ساندوتشات وسوبريم', nameEn: 'Subs & Supreme', slug: 'sandwiches', sortOrder: 4, isActive: true },
-  { id: 'cat-drinks', nameAr: 'عصائر ومشروبات', nameEn: 'Fresh Drinks', slug: 'drinks', sortOrder: 5, isActive: true },
-];
-
-export const INITIAL_DISHES: AdminDishItem[] = MEALS_DATA.map((meal, index) => {
-  let categoryId = 'cat-shawarma';
-  if (meal.category === 'towers') categoryId = 'cat-towers';
-  else if (meal.category === 'broasted') categoryId = 'cat-broasted';
-  else if (meal.category === 'sandwiches') categoryId = 'cat-sandwiches';
-  else if (meal.category === 'drinks') categoryId = 'cat-drinks';
-
-  let badge = '';
-  if (meal.isSignature) badge = 'Signature';
-  else if (meal.isBestseller) badge = 'Best Seller';
-  else if (meal.isSpicy) badge = 'Spicy';
-  else if (meal.isNew) badge = 'New';
-
-  return {
-    id: meal.id || `dish-${index + 1}`,
-    categoryId,
-    imageKey: meal.imageKey,
-    nameAr: meal.nameAr,
-    nameEn: meal.nameEn,
-    descriptionAr: meal.descriptionAr,
-    descriptionEn: meal.descriptionEn,
-    price: meal.price,
-    originalPrice: meal.originalPrice,
-    badge,
-    isAvailable: true,
-    preparationTime: '15-20 دقيقة',
-    rating: meal.rating,
-    reviewsCount: meal.reviewsCount,
-    ingredientsAr: meal.ingredientsAr,
-    ingredientsEn: meal.ingredientsEn,
-    options: meal.options,
-  };
-});
-
-class MenuService {
-  private broadcastUpdate() {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(MENU_UPDATED_EVENT));
-    }
+const emitMenuUpdated = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(MENU_SERVICE_UPDATED_EVENT));
+    window.dispatchEvent(new CustomEvent(MENU_UPDATED_EVENT));
   }
+};
 
-  public getCategories(): AdminCategoryItem[] {
-    if (typeof window === 'undefined') return INITIAL_CATEGORIES;
-    try {
-      const stored = localStorage.getItem(STORAGE_CATEGORIES_KEY);
-      if (stored) {
-        return JSON.parse(stored);
+/**
+ * Service for managing categories and menu items with Supabase and local cache fallback
+ */
+export const menuService = {
+  /**
+   * Fetches all categories
+   */
+  async fetchCategories(): Promise<CategoryItem[]> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const mapped: CategoryItem[] = data.map((c: CategoryRow) => ({
+            id: c.id,
+            nameAr: c.name_ar,
+            nameEn: c.name_en,
+            slug: c.slug || `cat-${c.id}`,
+            sortOrder: c.sort_order ?? 0,
+            isActive: c.is_active ?? true,
+          }));
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase fetchCategories failed, using fallback:', err);
       }
-      this.saveCategoriesToStorage(INITIAL_CATEGORIES);
-      return INITIAL_CATEGORIES;
-    } catch {
-      return INITIAL_CATEGORIES;
     }
-  }
+    return menuRepository.getCategories();
+  },
 
-  private saveCategoriesToStorage(cats: AdminCategoryItem[]) {
-    localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(cats));
-    this.broadcastUpdate();
-  }
+  /**
+   * Saves or updates a category
+   */
+  async saveCategory(data: CategoryFormData): Promise<CategoryItem> {
+    const localSaved = menuRepository.saveCategory(data);
 
-  public saveCategory(formData: CategoryFormData, id?: string): AdminCategoryItem {
-    const cats = this.getCategories();
-    let result: AdminCategoryItem;
-    if (id) {
-      const index = cats.findIndex((c) => c.id === id);
-      if (index !== -1) {
-        cats[index] = { ...cats[index], ...formData };
-        result = cats[index];
-      } else {
-        result = { id, ...formData };
-        cats.push(result);
+    if (isSupabaseConfigured) {
+      try {
+        const payload: Partial<CategoryRow> = {
+          name_ar: data.nameAr,
+          name_en: data.nameEn,
+          slug: data.slug,
+          sort_order: data.sortOrder,
+          is_active: data.isActive,
+        };
+
+        if (data.id && data.id.includes('-') && data.id.length >= 32) {
+          payload.id = data.id;
+        }
+
+        const { data: result, error } = await supabase
+          .from('categories')
+          .upsert(payload as any)
+          .select()
+          .single();
+
+        if (error) {
+          console.warn('[menuService] Supabase saveCategory error:', error.message);
+        } else if (result) {
+          localSaved.id = result.id;
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase saveCategory exception:', err);
       }
-    } else {
-      result = {
-        id: `cat-${Date.now().toString(36)}`,
-        ...formData,
-      };
-      cats.push(result);
     }
-    this.saveCategoriesToStorage(cats);
-    return result;
-  }
 
-  public deleteCategory(id: string): boolean {
-    const cats = this.getCategories().filter((c) => c.id !== id);
-    this.saveCategoriesToStorage(cats);
-    return true;
-  }
+    emitMenuUpdated();
+    return localSaved;
+  },
 
-  public getDishes(categoryId?: string): AdminDishItem[] {
-    if (typeof window === 'undefined') return INITIAL_DISHES;
-    let list: AdminDishItem[] = [];
-    try {
-      const stored = localStorage.getItem(STORAGE_DISHES_KEY);
-      if (stored) {
-        list = JSON.parse(stored);
-      } else {
-        list = INITIAL_DISHES;
-        this.saveDishesToStorage(list);
+  /**
+   * Deletes a category
+   */
+  async deleteCategory(id: string): Promise<boolean> {
+    const localDeleted = menuRepository.deleteCategory(id);
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.warn('[menuService] Supabase deleteCategory error:', error.message);
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase deleteCategory exception:', err);
       }
-    } catch {
-      list = INITIAL_DISHES;
     }
 
-    if (categoryId && categoryId !== 'all') {
-      return list.filter((d) => d.categoryId === categoryId);
-    }
-    return list;
-  }
+    emitMenuUpdated();
+    return localDeleted;
+  },
 
-  private saveDishesToStorage(dishes: AdminDishItem[]) {
-    localStorage.setItem(STORAGE_DISHES_KEY, JSON.stringify(dishes));
-    this.broadcastUpdate();
-  }
+  /**
+   * Fetches all menu items
+   */
+  async fetchMenuItems(): Promise<AdminMealItem[]> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('*')
+          .order('sort_order', { ascending: true });
 
-  public saveDish(formData: DishFormData, id?: string): AdminDishItem {
-    const dishes = this.getDishes();
-    let result: AdminDishItem;
-    if (id) {
-      const index = dishes.findIndex((d) => d.id === id);
-      if (index !== -1) {
-        dishes[index] = { ...dishes[index], ...formData };
-        result = dishes[index];
-      } else {
-        result = { id, ...formData };
-        dishes.push(result);
+        if (!error && data && data.length > 0) {
+          const mapped: AdminMealItem[] = data.map((item: MenuItemRow) => ({
+            id: item.id,
+            imageKey: item.image_url || 'shawarma-tower',
+            categoryId: item.category_id || '',
+            nameAr: item.name_ar || item.title_ar || '',
+            nameEn: item.name_en || item.title_en || '',
+            descriptionAr: item.description_ar || '',
+            descriptionEn: item.description_en || '',
+            price: Number(item.price) || 0,
+            originalPrice: undefined,
+            isAvailable: item.is_available ?? true,
+            isSignature: item.badge === 'Signature',
+            isBestseller: item.badge === 'Best Seller' || item.badge === 'Popular',
+            isSpicy: false,
+            isNew: false,
+            rating: 4.9,
+            reviewsCount: 120,
+            ingredientsAr: ['مكونات مايسترو الفاخرة'],
+            ingredientsEn: ['Fresh Maestro Ingredients'],
+            options: [],
+          }));
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase fetchMenuItems failed, using fallback:', err);
       }
-    } else {
-      result = {
-        id: `dish-${Date.now().toString(36)}`,
-        ...formData,
-      };
-      dishes.unshift(result);
     }
-    this.saveDishesToStorage(dishes);
-    return result;
-  }
+    return menuRepository.getDishes();
+  },
 
-  public deleteDish(id: string): boolean {
-    const dishes = this.getDishes().filter((d) => d.id !== id);
-    this.saveDishesToStorage(dishes);
-    return true;
-  }
+  /**
+   * Saves or updates a menu item
+   */
+  async saveMenuItem(data: MealFormData): Promise<AdminMealItem> {
+    const localSaved = menuRepository.saveDish(data);
 
-  public toggleDishAvailability(id: string, isAvailable?: boolean): AdminDishItem | null {
-    const dishes = this.getDishes();
-    const index = dishes.findIndex((d) => d.id === id);
-    if (index === -1) return null;
+    if (isSupabaseConfigured) {
+      try {
+        let badgeValue: string | null = null;
+        if (data.isSignature) badgeValue = 'Signature';
+        else if (data.isBestseller) badgeValue = 'Best Seller';
 
-    dishes[index].isAvailable = isAvailable !== undefined ? isAvailable : !dishes[index].isAvailable;
-    this.saveDishesToStorage(dishes);
-    return dishes[index];
-  }
+        const payload: Record<string, any> = {
+          name_ar: data.nameAr,
+          name_en: data.nameEn,
+          title_ar: data.nameAr,
+          title_en: data.nameEn,
+          description_ar: data.descriptionAr,
+          description_en: data.descriptionEn,
+          price: Math.round(Number(data.price)),
+          image_url: data.imageKey,
+          category_id: (data.categoryId && data.categoryId.length >= 32) ? data.categoryId : null,
+          is_available: data.isAvailable,
+          badge: badgeValue,
+          prep_time_minutes: 20,
+        };
 
-  public resetMenuToDefault() {
-    this.saveCategoriesToStorage(INITIAL_CATEGORIES);
-    this.saveDishesToStorage(INITIAL_DISHES);
-  }
-}
+        if (data.id && data.id.includes('-') && data.id.length >= 32) {
+          payload.id = data.id;
+        }
 
-export const menuService = new MenuService();
+        const { data: result, error } = await supabase
+          .from('menu_items')
+          .upsert(payload)
+          .select()
+          .single();
+
+        if (error) {
+          console.warn('[menuService] Supabase saveMenuItem error:', error.message);
+        } else if (result) {
+          localSaved.id = result.id;
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase saveMenuItem exception:', err);
+      }
+    }
+
+    emitMenuUpdated();
+    return localSaved;
+  },
+
+  /**
+   * Deletes a menu item
+   */
+  async deleteMenuItem(id: string): Promise<boolean> {
+    const localDeleted = menuRepository.deleteDish(id);
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase
+          .from('menu_items')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.warn('[menuService] Supabase deleteMenuItem error:', error.message);
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase deleteMenuItem exception:', err);
+      }
+    }
+
+    emitMenuUpdated();
+    return localDeleted;
+  },
+
+  /**
+   * Toggles menu item availability
+   */
+  async toggleMenuItemAvailability(id: string, isAvailable?: boolean): Promise<boolean> {
+    const localResult = menuRepository.toggleDishAvailability(id, isAvailable);
+    const newStatus = isAvailable ?? (localResult ? localResult.isAvailable : true);
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase
+          .from('menu_items')
+          .update({ is_available: newStatus })
+          .eq('id', id);
+
+        if (error) {
+          console.warn('[menuService] Supabase toggle availability error:', error.message);
+        }
+      } catch (err) {
+        console.warn('[menuService] Supabase toggle availability exception:', err);
+      }
+    }
+
+    emitMenuUpdated();
+    return !!localResult;
+  },
+
+  // Aliases for seamless naming compatibility
+  saveDish(data: MealFormData): Promise<AdminMealItem> {
+    return this.saveMenuItem(data);
+  },
+  deleteDish(id: string): Promise<boolean> {
+    return this.deleteMenuItem(id);
+  },
+  toggleDishAvailability(id: string, isAvailable?: boolean): Promise<boolean> {
+    return this.toggleMenuItemAvailability(id, isAvailable);
+  },
+};

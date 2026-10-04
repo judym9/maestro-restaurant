@@ -118,6 +118,8 @@ export interface Database {
           category_id: string | null;
           name_ar: string;
           name_en: string;
+          title_ar?: string | null;
+          title_en?: string | null;
           description_ar: string | null;
           description_en: string | null;
           price: number;
@@ -125,6 +127,7 @@ export interface Database {
           badge: string | null;
           is_available: boolean;
           preparation_time: string | null;
+          prep_time_minutes?: number;
           sort_order: number;
           created_at: string;
         };
@@ -133,6 +136,8 @@ export interface Database {
           category_id?: string | null;
           name_ar: string;
           name_en: string;
+          title_ar?: string | null;
+          title_en?: string | null;
           description_ar?: string | null;
           description_en?: string | null;
           price: number;
@@ -140,6 +145,7 @@ export interface Database {
           badge?: string | null;
           is_available?: boolean;
           preparation_time?: string | null;
+          prep_time_minutes?: number;
           sort_order?: number;
           created_at?: string;
         };
@@ -148,6 +154,8 @@ export interface Database {
           category_id?: string | null;
           name_ar?: string;
           name_en?: string;
+          title_ar?: string | null;
+          title_en?: string | null;
           description_ar?: string | null;
           description_en?: string | null;
           price?: number;
@@ -155,6 +163,7 @@ export interface Database {
           badge?: string | null;
           is_available?: boolean;
           preparation_time?: string | null;
+          prep_time_minutes?: number;
           sort_order?: number;
           created_at?: string;
         };
@@ -308,6 +317,93 @@ export interface Database {
           }
         ];
       };
+      promotions: {
+        Row: {
+          id: string;
+          title_ar: string;
+          title_en: string;
+          description_ar: string | null;
+          description_en: string | null;
+          discount_percentage: number;
+          badge: string | null;
+          image_url: string | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title_ar: string;
+          title_en: string;
+          description_ar?: string | null;
+          description_en?: string | null;
+          discount_percentage?: number;
+          badge?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title_ar?: string;
+          title_en?: string;
+          description_ar?: string | null;
+          description_en?: string | null;
+          discount_percentage?: number;
+          badge?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      restaurant_settings: {
+        Row: {
+          id: number;
+          is_kitchen_open: boolean;
+          delivery_time_ar: string;
+          delivery_time_en: string;
+          announcement_banner_active: boolean;
+          announcement_banner_text_ar: string;
+          announcement_banner_text_en: string;
+          phone: string;
+          whatsapp: string;
+          address_ar: string;
+          address_en: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          is_kitchen_open?: boolean;
+          delivery_time_ar?: string;
+          delivery_time_en?: string;
+          announcement_banner_active?: boolean;
+          announcement_banner_text_ar?: string;
+          announcement_banner_text_en?: string;
+          phone?: string;
+          whatsapp?: string;
+          address_ar?: string;
+          address_en?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          is_kitchen_open?: boolean;
+          delivery_time_ar?: string;
+          delivery_time_en?: string;
+          announcement_banner_active?: boolean;
+          announcement_banner_text_ar?: string;
+          announcement_banner_text_en?: string;
+          phone?: string;
+          whatsapp?: string;
+          address_ar?: string;
+          address_en?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -339,7 +435,13 @@ export type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];
 export type MenuItemInsert = Database['public']['Tables']['menu_items']['Insert'];
 export type MenuItemUpdate = Database['public']['Tables']['menu_items']['Update'];
 
-export type AdminUserRow = Database['public']['Tables']['admin_users']['Row'];
+export type PromotionRow = Database['public']['Tables']['promotions']['Row'];
+export type PromotionInsert = Database['public']['Tables']['promotions']['Insert'];
+export type PromotionUpdate = Database['public']['Tables']['promotions']['Update'];
+
+export type RestaurantSettingsRow = Database['public']['Tables']['restaurant_settings']['Row'];
+export type RestaurantSettingsInsert = Database['public']['Tables']['restaurant_settings']['Insert'];
+export type RestaurantSettingsUpdate = Database['public']['Tables']['restaurant_settings']['Update'];
 
 export type MealRow = Database['public']['Tables']['meals']['Row'];
 export type OrderRow = Database['public']['Tables']['orders']['Row'];

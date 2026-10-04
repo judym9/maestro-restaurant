@@ -2,24 +2,32 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type Theme = 'dark' | 'light';
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: Theme;
+  isSystemTheme: boolean;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  resetToSystemTheme: () => void;
 }
 
-const PRIMARY_THEME_KEY = 'mastro_theme';
-const LEGACY_THEME_KEY = 'maestro_theme_preference';
+const PRIMARY_THEME_KEY = 'theme';
+const LEGACY_THEME_KEYS = ['mastro_theme', 'maestro_theme_preference', 'maestro_admin_theme_mode'];
 
 /**
- * Reads manual override from localStorage if present
+ * Reads manual override from localStorage if explicitly present and valid
  */
-const getSavedTheme = (): Theme | null => {
+export const getSavedTheme = (): Theme | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const saved = localStorage.getItem(PRIMARY_THEME_KEY) || localStorage.getItem(LEGACY_THEME_KEY);
+    const saved = localStorage.getItem(PRIMARY_THEME_KEY);
     if (saved === 'dark' || saved === 'light') {
       return saved;
+    }
+    for (const key of LEGACY_THEME_KEYS) {
+      const legacy = localStorage.getItem(key);
+      if (legacy === 'dark' || legacy === 'light') {
+        return legacy;
+      }
     }
   } catch (err) {
     console.warn('[ThemeProvider] Unable to read localStorage:', err);
@@ -28,22 +36,22 @@ const getSavedTheme = (): Theme | null => {
 };
 
 /**
- * Detects operating system theme via matchMedia
+ * Detects operating system theme via matchMedia('(prefers-color-scheme: dark)')
  */
-const getSystemTheme = (): Theme => {
+export const getSystemTheme = (): Theme => {
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     return mediaQuery.matches ? 'dark' : 'light';
   }
-  return 'dark'; // Default luxury mood
+  return 'dark'; // Fallback
 };
 
 /**
  * Detection order:
- * 1. localStorage ('mastro_theme' or legacy key)
+ * 1. Saved override in localStorage ('theme' or legacy keys)
  * 2. System theme via window.matchMedia('(prefers-color-scheme: dark)')
  */
-const getInitialTheme = (): Theme => {
+export const getInitialTheme = (): Theme => {
   const saved = getSavedTheme();
   if (saved) return saved;
   return getSystemTheme();
@@ -63,22 +71,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Sync DOM on theme state changes
+  // Immediate sync on mount & state change
   useEffect(() => {
     applyThemeToDom(theme);
   }, [theme]);
 
-  // Live system theme listener (active only when no manual override in localStorage)
+  // Live system theme listener (updates in real time when no manual override exists)
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-
-    // If user has manually overridden the theme, bypass the live system listener
-    if (hasManualOverride) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleSystemChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      // Re-check localStorage in case it changed in another tab or action
+      // If user has not manually set and saved an override, follow device theme
       const saved = getSavedTheme();
       if (!saved) {
         const nextTheme: Theme = e.matches ? 'dark' : 'light';
@@ -93,18 +98,39 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       (mediaQuery as any).addListener(handleSystemChange);
     }
 
+    // Storage event listener for cross-tab or DevTools clearing
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || e.key === PRIMARY_THEME_KEY || LEGACY_THEME_KEYS.includes(e.key)) {
+        const saved = getSavedTheme();
+        if (saved) {
+          setHasManualOverride(true);
+          setThemeState(saved);
+          applyThemeToDom(saved);
+        } else {
+          setHasManualOverride(false);
+          const sysTheme = getSystemTheme();
+          setThemeState(sysTheme);
+          applyThemeToDom(sysTheme);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       if (mediaQuery.removeEventListener) {
         mediaQuery.removeEventListener('change', handleSystemChange);
       } else if ((mediaQuery as any).removeListener) {
         (mediaQuery as any).removeListener(handleSystemChange);
       }
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [hasManualOverride]);
+  }, []);
 
   const setTheme = (newTheme: Theme) => {
     try {
       localStorage.setItem(PRIMARY_THEME_KEY, newTheme);
+      localStorage.setItem('mastro_theme', newTheme);
+      localStorage.setItem('maestro_admin_theme_mode', newTheme);
     } catch (err) {
       console.warn('[ThemeProvider] Failed to save theme override:', err);
     }
@@ -118,6 +144,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const nextTheme: Theme = prev === 'dark' ? 'light' : 'dark';
       try {
         localStorage.setItem(PRIMARY_THEME_KEY, nextTheme);
+        localStorage.setItem('mastro_theme', nextTheme);
+        localStorage.setItem('maestro_admin_theme_mode', nextTheme);
       } catch (err) {
         console.warn('[ThemeProvider] Failed to save theme override:', err);
       }
@@ -127,8 +155,31 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  const resetToSystemTheme = () => {
+    try {
+      localStorage.removeItem(PRIMARY_THEME_KEY);
+      for (const k of LEGACY_THEME_KEYS) {
+        localStorage.removeItem(k);
+      }
+    } catch (err) {
+      console.warn('[ThemeProvider] Failed to clear theme overrides:', err);
+    }
+    setHasManualOverride(false);
+    const sysTheme = getSystemTheme();
+    setThemeState(sysTheme);
+    applyThemeToDom(sysTheme);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        isSystemTheme: !hasManualOverride,
+        toggleTheme,
+        setTheme,
+        resetToSystemTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -168,8 +168,36 @@ export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     window.addEventListener(SETTINGS_EVENT, handleLocalUpdate);
 
+    const handleRestaurantSettingsUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<any>;
+      if (customEvent.detail) {
+        const item = customEvent.detail;
+        setSettings((prev) => {
+          const updated: SiteSettingsRow = {
+            ...prev,
+            is_restaurant_open: item.isKitchenOpen ?? item.is_kitchen_open ?? prev.is_restaurant_open,
+            banner_enabled: item.announcementBannerActive ?? item.announcement_banner_active ?? prev.banner_enabled,
+            banner_text_ar: item.announcementBannerTextAr ?? item.announcement_banner_text_ar ?? prev.banner_text_ar,
+            banner_text_en: item.announcementBannerTextEn ?? item.announcement_banner_text_en ?? prev.banner_text_en,
+            delivery_estimate_ar: item.deliveryTimeAr ?? item.delivery_time_ar ?? prev.delivery_estimate_ar,
+            delivery_estimate_en: item.deliveryTimeEn ?? item.delivery_time_en ?? prev.delivery_estimate_en,
+            primary_phone: item.phone ?? prev.primary_phone,
+            whatsapp_number: item.whatsapp ?? prev.whatsapp_number,
+            address_ar: item.addressAr ?? item.address_ar ?? prev.address_ar,
+            address_en: item.addressEn ?? item.address_en ?? prev.address_en,
+          };
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    };
+    window.addEventListener('maestro:settings-service-updated', handleRestaurantSettingsUpdate);
+
     // Supabase Realtime subscription if configured
     let subscription: any = null;
+    let restaurantSubscription: any = null;
     if (isSupabaseConfigured) {
       try {
         subscription = supabase
@@ -189,6 +217,38 @@ export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }
           )
           .subscribe();
+
+        restaurantSubscription = supabase
+          .channel('public:restaurant_settings')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'restaurant_settings' },
+            (payload) => {
+              if (payload.new) {
+                const item = payload.new as any;
+                setSettings((prev) => {
+                  const updated: SiteSettingsRow = {
+                    ...prev,
+                    is_restaurant_open: item.is_kitchen_open ?? prev.is_restaurant_open,
+                    banner_enabled: item.announcement_banner_active ?? prev.banner_enabled,
+                    banner_text_ar: item.announcement_banner_text_ar ?? prev.banner_text_ar,
+                    banner_text_en: item.announcement_banner_text_en ?? prev.banner_text_en,
+                    delivery_estimate_ar: item.delivery_time_ar ?? prev.delivery_estimate_ar,
+                    delivery_estimate_en: item.delivery_time_en ?? prev.delivery_estimate_en,
+                    primary_phone: item.phone ?? prev.primary_phone,
+                    whatsapp_number: item.whatsapp ?? prev.whatsapp_number,
+                    address_ar: item.address_ar ?? prev.address_ar,
+                    address_en: item.address_en ?? prev.address_en,
+                  };
+                  try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+                  } catch {}
+                  return updated;
+                });
+              }
+            }
+          )
+          .subscribe();
       } catch (err) {
         console.warn('[SiteSettings] Realtime subscription not available:', err);
       }
@@ -196,8 +256,12 @@ export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     return () => {
       window.removeEventListener(SETTINGS_EVENT, handleLocalUpdate);
+      window.removeEventListener('maestro:settings-service-updated', handleRestaurantSettingsUpdate);
       if (subscription && typeof subscription.unsubscribe === 'function') {
         subscription.unsubscribe();
+      }
+      if (restaurantSubscription && typeof restaurantSubscription.unsubscribe === 'function') {
+        restaurantSubscription.unsubscribe();
       }
     };
   }, [fetchSettings]);
