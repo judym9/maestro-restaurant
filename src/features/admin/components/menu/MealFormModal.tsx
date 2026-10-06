@@ -49,7 +49,6 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Smooth scroll to center of screen
     const scrollTimer = setTimeout(() => {
       const editSection = modalCardRef.current || document.getElementById('quick-edit-section');
       if (editSection) {
@@ -60,7 +59,6 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
       }
     }, 50);
 
-    // Lock body scroll after smooth scroll initiates
     const lockTimer = setTimeout(() => {
       document.body.style.overflow = 'hidden';
     }, 450);
@@ -176,16 +174,16 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
         aria-hidden="true"
       />
 
-      {/* Modal Card / Quick Edit Section */}
+      {/* Modal Card */}
       <div
         id="quick-edit-section"
         ref={modalCardRef}
-        className="relative w-full max-w-3xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-2xl flex flex-col shadow-2xl overflow-hidden z-10 text-white animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex flex-col shadow-2xl overflow-hidden z-10 text-slate-900 dark:text-zinc-100 animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Fixed Header */}
-        <div className="px-6 py-4 border-b border-slate-800 shrink-0 flex items-center justify-between bg-slate-900">
-          <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+        <div className="px-6 py-4.5 border-b border-slate-100 dark:border-zinc-800/80 shrink-0 flex items-center justify-between bg-white dark:bg-zinc-900">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
+            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
               <UtensilsCrossed size={18} />
             </span>
             <span>
@@ -198,21 +196,21 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
               e.preventDefault();
               onClose();
             }}
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Form wrapping scrollable content and fixed footer */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Scrollable Form Fields Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 custom-admin-scrollbar">
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4.5 custom-admin-scrollbar">
             {/* Dish Names (Arabic & English) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'اسم الوجبة بالعربية *' : 'Dish Name (Arabic) *'}
                 </label>
                 <input
@@ -221,13 +219,13 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   value={nameAr}
                   onChange={(e) => setNameAr(e.target.value)}
                   placeholder="مثال: برج شاورما مايسترو الملكي"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors"
                   dir="rtl"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'اسم الوجبة بالإنجليزية *' : 'Dish Name (English) *'}
                 </label>
                 <input
@@ -236,7 +234,7 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   value={nameEn}
                   onChange={(e) => setNameEn(e.target.value)}
                   placeholder="e.g. Royal Shawarma Tower"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors text-left"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left"
                   dir="ltr"
                 />
               </div>
@@ -245,16 +243,16 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
             {/* Category & Image Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'التصنيف *' : 'Category *'}
                 </label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors cursor-pointer"
                 >
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                    <option key={c.id} value={c.id} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
                       {isAr ? c.nameAr : c.nameEn}
                     </option>
                   ))}
@@ -262,16 +260,16 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'الصورة المعتمدة *' : 'Associated Photo Asset *'}
                 </label>
                 <select
                   value={imageKey}
                   onChange={(e) => setImageKey(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors cursor-pointer"
                 >
                   {availableImageKeys.map((k) => (
-                    <option key={k} value={k} className="bg-slate-900 text-white">
+                    <option key={k} value={k} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
                       {MealAssets[k]?.altAr || k}
                     </option>
                   ))}
@@ -282,8 +280,8 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
             {/* Pricing (Current & Original) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  {isAr ? 'السعر الحالي *' : 'Current Price *'}
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  {isAr ? 'السعر الحالي (ل.س) *' : 'Current Price (SYP) *'}
                 </label>
                 <input
                   type="number"
@@ -292,14 +290,14 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   step={1000}
                   value={price}
                   onChange={(e) => setPrice(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-amber-400 font-bold focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-amber-500 dark:text-amber-400 font-bold focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors font-numeric"
                   dir="ltr"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  {isAr ? 'السعر قبل الخصم' : 'Price Before Discount'}
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
+                  {isAr ? 'السعر قبل الخصم (اختياري)' : 'Price Before Discount (Optional)'}
                 </label>
                 <input
                   type="number"
@@ -308,7 +306,7 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   value={originalPrice || ''}
                   onChange={(e) => setOriginalPrice(e.target.value ? Number(e.target.value) : undefined)}
                   placeholder="مثال: 180000"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors font-numeric"
                   dir="ltr"
                 />
               </div>
@@ -317,7 +315,7 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
             {/* Descriptions (Arabic & English) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'الوصف بالعربية' : 'Arabic Description'}
                 </label>
                 <textarea
@@ -325,13 +323,13 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   value={descriptionAr}
                   onChange={(e) => setDescriptionAr(e.target.value)}
                   placeholder="وصف تفصيلي لمكونات الطبق والخلطة الملكية..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm leading-relaxed transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm leading-relaxed transition-colors"
                   dir="rtl"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                   {isAr ? 'الوصف بالإنجليزية' : 'English Description'}
                 </label>
                 <textarea
@@ -339,7 +337,7 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   value={descriptionEn}
                   onChange={(e) => setDescriptionEn(e.target.value)}
                   placeholder="Detailed description of flavors and serving..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm leading-relaxed transition-colors text-left"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm leading-relaxed transition-colors text-left"
                   dir="ltr"
                 />
               </div>
@@ -347,16 +345,16 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
 
             {/* Badges & Features Checkboxes / Toggles */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                {isAr ? 'حالة الوجبة والشارات' : 'Dish Status & Badges'}
+              <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-2">
+                {isAr ? 'حالة الوجبة والشارات الخاصة' : 'Dish Status & Badges'}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* متوفر */}
                 <label
                   className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all cursor-pointer select-none ${
                     isAvailable
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
-                      : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:border-slate-600'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-700'
                   }`}
                 >
                   <input
@@ -366,7 +364,7 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                     className="w-4 h-4 rounded text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
                   />
                   <span className="text-xs font-bold">
-                    {isAr ? 'متوفر' : 'Available'}
+                    {isAr ? 'متاح للطلب' : 'Available'}
                   </span>
                 </label>
 
@@ -374,8 +372,8 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                 <label
                   className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all cursor-pointer select-none ${
                     isSignature
-                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
-                      : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:border-slate-600'
+                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                      : 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-700'
                   }`}
                 >
                   <input
@@ -393,8 +391,8 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                 <label
                   className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all cursor-pointer select-none ${
                     isSpicy
-                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-400'
-                      : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:border-slate-600'
+                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400'
+                      : 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-700'
                   }`}
                 >
                   <input
@@ -412,15 +410,15 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                 <label
                   className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all cursor-pointer select-none ${
                     isBestseller
-                      ? 'bg-teal-500/10 border-teal-500/40 text-teal-400'
-                      : 'bg-slate-800/60 border-slate-700/80 text-slate-400 hover:border-slate-600'
+                      ? 'bg-sky-500/10 border-sky-500/40 text-sky-600 dark:text-sky-400'
+                      : 'bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-400 hover:border-slate-300 dark:hover:border-zinc-700'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={isBestseller}
                     onChange={(e) => setIsBestseller(e.target.checked)}
-                    className="w-4 h-4 rounded text-teal-500 focus:ring-0 cursor-pointer accent-teal-500"
+                    className="w-4 h-4 rounded text-sky-500 focus:ring-0 cursor-pointer accent-sky-500"
                   />
                   <span className="text-xs font-bold">
                     {isAr ? 'الأكثر طلباً' : 'Bestseller'}
@@ -430,8 +428,8 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
             </div>
 
             {/* Options / Customizations Section */}
-            <div className="space-y-3 pt-4 border-t border-slate-800">
-              <label className="block text-sm font-medium text-slate-300">
+            <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
                 {isAr ? 'خيارات وأحجام الوجبة الإضافية' : 'Portion Sizes & Custom Options'}
               </label>
 
@@ -441,22 +439,22 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   {options.map((opt) => (
                     <div
                       key={opt.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-800/70 border border-slate-700 text-xs shadow-xs"
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-800 text-xs shadow-xs"
                     >
-                      <span className="font-bold text-white text-sm">
+                      <span className="font-bold text-slate-900 dark:text-zinc-100 text-sm">
                         {isAr ? opt.nameAr : (opt.nameEn || opt.nameAr)}
                       </span>
                       <div className="flex items-center gap-3">
-                        <span className="text-amber-400 font-bold font-mono">
+                        <span className="text-amber-500 dark:text-amber-400 font-bold font-numeric">
                           {opt.priceDiff > 0 ? `+${opt.priceDiff.toLocaleString()} ل.س` : (isAr ? 'السعر الأساسي' : 'Included')}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveOption(opt.id)}
-                          className="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          className="text-rose-500 dark:text-rose-400 hover:text-rose-600 p-1.5 rounded-md hover:bg-rose-500/10 transition-colors cursor-pointer"
                           title={isAr ? 'حذف هذا الخيار' : 'Delete option'}
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -465,46 +463,46 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
               )}
 
               {/* Add New Option Inputs Card */}
-              <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/30 border border-slate-200 dark:border-zinc-800 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1">
                       {isAr ? 'الاسم بالعربية' : 'Arabic Name'}
                     </label>
                     <input
                       type="text"
-                      placeholder={isAr ? 'الاسم بالعربي' : 'Name in Arabic'}
+                      placeholder={isAr ? 'مثال: حجم كبير' : 'Name in Arabic'}
                       value={newOptNameAr}
                       onChange={(e) => setNewOptNameAr(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500"
                       dir="rtl"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1">
                       {isAr ? 'الاسم بالإنجليزية' : 'English Name'}
                     </label>
                     <input
                       type="text"
-                      placeholder="Name EN"
+                      placeholder="e.g. Large Size"
                       value={newOptNameEn}
                       onChange={(e) => setNewOptNameEn(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-left"
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-amber-500 text-left"
                       dir="ltr"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                      {isAr ? 'فارق السعر' : 'Price Difference'}
+                    <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mb-1">
+                      {isAr ? 'فارق السعر (ل.س)' : 'Price Diff (SYP)'}
                     </label>
                     <input
                       type="number"
-                      placeholder={isAr ? 'فارق السعر' : 'Price diff'}
+                      placeholder={isAr ? '0 إذا كان مشمولاً' : '0 if included'}
                       value={newOptPriceDiff || ''}
                       onChange={(e) => setNewOptPriceDiff(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-amber-400 font-bold placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs text-amber-500 dark:text-amber-400 font-bold placeholder:text-slate-400 focus:outline-none focus:border-amber-500 font-numeric"
                       dir="ltr"
                     />
                   </div>
@@ -514,9 +512,9 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddOption}
-                    className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-white transition-all active:scale-95 cursor-pointer shadow-xs"
+                    className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all active:scale-95 cursor-pointer shadow-xs"
                   >
-                    <Plus size={14} className="text-amber-400" />
+                    <Plus size={14} className="text-amber-500" />
                     <span>{isAr ? 'إضافة الخيار' : 'Add Option'}</span>
                   </button>
                 </div>
@@ -525,20 +523,20 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
           </div>
 
           {/* Fixed Footer Actions */}
-          <div className="px-6 py-4 border-t border-slate-800 flex items-center justify-center gap-4 shrink-0 bg-slate-900">
+          <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-end gap-3 shrink-0 bg-slate-50/50 dark:bg-zinc-900/50">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 onClose();
               }}
-              className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-sm font-semibold cursor-pointer"
+              className="px-4 py-2 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-xs font-semibold cursor-pointer"
             >
               {isAr ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               type="submit"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm cursor-pointer"
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 text-xs cursor-pointer"
             >
               {isAr ? 'حفظ التعديلات' : 'Save Changes'}
             </button>

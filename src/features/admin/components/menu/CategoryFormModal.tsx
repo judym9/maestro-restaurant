@@ -43,7 +43,6 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Smooth scroll to center of screen
     const scrollTimer = setTimeout(() => {
       const categorySection = cardRef.current || document.getElementById('add-category-section');
       if (categorySection) {
@@ -54,7 +53,6 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       }
     }, 50);
 
-    // Ensure autofocus on the first input
     const focusTimer = setTimeout(() => {
       inputRef.current?.focus();
     }, 120);
@@ -104,16 +102,16 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
         aria-hidden="true"
       />
 
-      {/* Modal Dialog Card / Add Category Section */}
+      {/* Modal Dialog Card */}
       <div
         id="add-category-section"
         ref={cardRef}
-        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl flex flex-col p-6 shadow-2xl z-10 text-white animate-in fade-in zoom-in-95 duration-200 my-auto"
+        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex flex-col p-6 shadow-2xl z-10 text-slate-900 dark:text-zinc-100 animate-in fade-in zoom-in-95 duration-200 my-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5 shrink-0">
-          <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-4 mb-5 shrink-0">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
+            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
               <FolderPlus size={18} />
             </span>
             <span>
@@ -129,34 +127,33 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               e.preventDefault();
               onClose();
             }}
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
               {isAr ? 'اسم التصنيف بالعربية *' : 'Category Name (Arabic) *'}
             </label>
             <input
               ref={inputRef}
               type="text"
               required
-              autoFocus
               value={nameAr}
               onChange={(e) => setNameAr(e.target.value)}
               placeholder={isAr ? 'مثال: وجبات سريعة، مقبلات...' : 'e.g. Fast Food, Appetizers...'}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors"
               dir="rtl"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
               {isAr ? 'اسم التصنيف بالإنجليزية *' : 'Category Name (English) *'}
             </label>
             <input
@@ -165,13 +162,13 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
               placeholder="e.g. Fast Food, Appetizers..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors text-left"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left"
               dir="ltr"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
               {isAr ? 'الرمز التعريفي (Slug)' : 'URL Slug'}
             </label>
             <input
@@ -179,31 +176,29 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="e.g. fast-food"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm transition-colors text-left font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-mono"
               dir="ltr"
             />
           </div>
 
           {/* Action Footer */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3 mt-4 shrink-0">
+          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-end gap-3 mt-4 shrink-0">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 onClose();
               }}
-              className="px-5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition-colors text-sm font-semibold cursor-pointer"
+              className="px-4 py-2 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-xs font-semibold cursor-pointer"
             >
               {isAr ? 'إلغاء' : 'Cancel'}
             </button>
 
             <button
               type="submit"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm cursor-pointer"
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2 rounded-xl shadow-sm transition-all active:scale-95 text-xs cursor-pointer"
             >
-              {isAr
-                ? (initialData ? 'حفظ التعديلات' : 'إضافة التصنيف')
-                : (initialData ? 'Save Changes' : 'Add Category')}
+              {initialData ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إضافة التصنيف' : 'Add Category')}
             </button>
           </div>
         </form>

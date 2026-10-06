@@ -20,6 +20,16 @@ export const DEFAULT_CONTACT_INFO: BranchContactInfo = {
   workingHoursEn: 'Daily: 12:00 PM - 02:00 AM',
 };
 
+export const DEFAULT_WEEKLY_SCHEDULE = [
+  { dayId: 'saturday', nameAr: 'السبت', nameEn: 'Saturday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'sunday', nameAr: 'الأحد', nameEn: 'Sunday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'monday', nameAr: 'الإثنين', nameEn: 'Monday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'tuesday', nameAr: 'الثلاثاء', nameEn: 'Tuesday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'wednesday', nameAr: 'الأربعاء', nameEn: 'Wednesday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'thursday', nameAr: 'الخميس', nameEn: 'Thursday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+  { dayId: 'friday', nameAr: 'الجمعة', nameEn: 'Friday', isOpen: true, openTime: '12:00', closeTime: '02:00' },
+];
+
 export const DEFAULT_OPERATING_SCHEDULE: OperatingSchedule = {
   isOpen: true,
   autoToggle: false,
@@ -28,6 +38,11 @@ export const DEFAULT_OPERATING_SCHEDULE: OperatingSchedule = {
   emergencyNoticeAr: 'نستقبلكم بكل حب وسرور يومياً في فرعنا بالنبك وخدمة التوصيل السريع متاحة!',
   emergencyNoticeEn: 'Welcoming you with warmth daily in Al-Nabek with fast delivery available!',
   showEmergencyBanner: false,
+  weeklySchedule: DEFAULT_WEEKLY_SCHEDULE,
+  minOrderAmount: 50000,
+  deliveryFee: 15000,
+  estimatedDeliveryTimeAr: '30 - 45 دقيقة',
+  estimatedDeliveryTimeEn: '30 - 45 mins',
 };
 
 export const DEFAULT_THEME_TOKENS: ThemeTokens = {
@@ -83,7 +98,12 @@ class LocalStorageSettingsRepository implements ISettingsRepository {
     try {
       const stored = localStorage.getItem(STORAGE_SCHEDULE_KEY);
       if (stored) {
-        return { ...DEFAULT_OPERATING_SCHEDULE, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        return {
+          ...DEFAULT_OPERATING_SCHEDULE,
+          ...parsed,
+          weeklySchedule: parsed.weeklySchedule?.length ? parsed.weeklySchedule : DEFAULT_WEEKLY_SCHEDULE,
+        };
       }
     } catch (e) {
       console.warn('[settingsRepository] Failed reading operating schedule:', e);
@@ -155,6 +175,18 @@ class LocalStorageSettingsRepository implements ISettingsRepository {
       root.style.setProperty('--gold-500', tokens.primaryAccent);
       root.style.setProperty('--primary', tokens.primaryAccent);
       root.style.setProperty('--accent-gold', tokens.primaryAccent);
+    }
+    if (tokens.secondaryAccent) {
+      root.style.setProperty('--color-secondary', tokens.secondaryAccent);
+    }
+    if (tokens.successColor) {
+      root.style.setProperty('--color-success', tokens.successColor);
+    }
+    if (tokens.dangerColor) {
+      root.style.setProperty('--color-danger', tokens.dangerColor);
+    }
+    if (tokens.fontFamily) {
+      root.style.setProperty('--font-arabic', tokens.fontFamily);
     }
 
     let dynamicStyle = document.getElementById('maestro-admin-dynamic-palette');

@@ -1,5 +1,14 @@
-import React from 'react';
-import { CheckCircle, MessageCircle, Utensils, Clock, DollarSign } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  CheckCircle2,
+  MessageCircle,
+  Utensils,
+  Clock,
+  Copy,
+  Check,
+  User,
+  Receipt
+} from 'lucide-react';
 import { Modal } from '../../../common/components/Modal/Modal';
 import { Button } from '../../../common/components/Button/Button';
 import { formatSYP } from '../../../utils/currency';
@@ -24,6 +33,19 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
 }) => {
   const { language, isRtl, t } = useLanguage();
   const { settings } = useSiteSettings();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(orderNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleOpenWhatsApp = () => {
     const phone = settings.whatsapp_number ? settings.whatsapp_number.replace(/\D/g, '') : '963969697587';
@@ -36,36 +58,83 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} showCloseButton={true}>
-      <div className="order-success-modal animate-fade-in">
-        <div className="order-success-icon-wrap">
-          <CheckCircle size={46} />
+      <div className="order-success-card">
+        {/* Animated Success Badge */}
+        <div className="order-success-icon-wrapper">
+          <div className="order-success-ambient-glow" />
+          <div className="order-success-icon-badge">
+            <CheckCircle2 size={44} />
+          </div>
         </div>
 
-        <div>
+        {/* Heading & Subtitle */}
+        <div className="order-success-header">
           <h3 className="order-success-title">{t.common.cart.orderSuccessTitle}</h3>
           <p className="order-success-subtitle">{t.common.cart.orderSuccessSubtitle}</p>
         </div>
 
-        <div className="order-code-card">
-          <span className="order-code-label">{t.common.cart.orderNumberLabel}</span>
-          <span className="order-code-val">{orderNumber}</span>
-          <div className="order-meta-pill-row">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-              <Clock size={15} color="var(--accent-gold)" />
-              {t.common.cart.prepMinutes}
-            </span>
-            <span>•</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-              <DollarSign size={15} color="var(--accent-gold)" />
-              {formatSYP(totalPrice, { locale: language })}
-            </span>
+        {/* Digital Ticket / Receipt Card */}
+        <div className="order-ticket-container">
+          <div className="order-ticket-header">
+            <div className="order-ticket-label-group">
+              <Receipt size={14} className="order-ticket-icon" />
+              <span className="order-ticket-label">{t.common.cart.orderNumberLabel}</span>
+            </div>
+
+            {/* Interactive 1-click Copy */}
+            <button
+              type="button"
+              className={`order-code-copy-btn ${copied ? 'is-copied' : ''}`}
+              onClick={handleCopyCode}
+              title={copied ? (isRtl ? 'تم النسخ!' : 'Copied!') : (isRtl ? 'نسخ رقم الطلب' : 'Copy order code')}
+            >
+              {copied ? (
+                <>
+                  <Check size={13} />
+                  <span>{isRtl ? 'تم النسخ!' : 'Copied!'}</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={13} />
+                  <span>{isRtl ? 'نسخ' : 'Copy'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="order-code-display font-numeric">{orderNumber}</div>
+
+          <div className="order-ticket-perforation">
+            <div className="ticket-notch left" />
+            <div className="ticket-dashed-line" />
+            <div className="ticket-notch right" />
+          </div>
+
+          {/* Details Row */}
+          <div className="order-meta-grid">
+            <div className="order-meta-item">
+              <User size={13} className="order-meta-item-icon" />
+              <span className="order-meta-item-text">{customerName}</span>
+            </div>
+
+            <div className="order-meta-item">
+              <Clock size={13} className="order-meta-item-icon" />
+              <span className="order-meta-item-text">{t.common.cart.prepMinutes}</span>
+            </div>
+
+            <div className="order-meta-item highlight">
+              <span className="order-meta-item-text font-numeric">
+                {formatSYP(totalPrice, { locale: language })}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="order-success-actions">
+        {/* Action Buttons */}
+        <div className="order-success-action-stack">
           <button
             type="button"
-            className="whatsapp-checkout-btn"
+            className="cart-whatsapp-button order-whatsapp-cta"
             onClick={handleOpenWhatsApp}
           >
             <MessageCircle size={20} />
@@ -77,6 +146,7 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
             size="md"
             leftIcon={<Utensils size={16} />}
             onClick={onClose}
+            className="w-full"
           >
             {t.common.cart.backToMenu}
           </Button>
@@ -85,3 +155,4 @@ export const OrderSuccessModal: React.FC<OrderSuccessModalProps> = ({
     </Modal>
   );
 };
+

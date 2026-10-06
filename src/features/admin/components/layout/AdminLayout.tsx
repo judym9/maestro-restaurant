@@ -75,9 +75,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
       )}
 
-      {/* Scrollable Main Viewport (Zero-Squashing Guarantee with py-10 md:py-12) */}
-      <main className="flex-1 min-w-0 px-6 py-10 sm:px-8 md:px-12 md:py-12 overflow-y-auto space-y-10 custom-admin-scrollbar">
-        <div className="w-full max-w-7xl mx-auto space-y-8">
+      {/* Scrollable Main Viewport with Balanced Padding & Zero Horizontal Overflow */}
+      <main className="flex-1 min-w-0 px-4 py-6 sm:px-6 md:px-8 md:py-8 overflow-y-auto overflow-x-hidden space-y-6 sm:space-y-8 custom-admin-scrollbar">
+        <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 min-w-0">
           <AdminTopbar
             activeTab={activeTab}
             language={language}

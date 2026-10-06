@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -13,8 +13,13 @@ import {
   Store,
   ChevronRight,
   ChevronLeft,
+  LogOut,
+  ShieldCheck,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import { BrandAssets } from '../../../../utils/imageRegistry';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 export type AdminNavTab = 'dashboard' | 'menu' | 'promotions' | 'settings' | 'theme';
 
@@ -66,6 +71,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const isAr = language === 'ar';
   const ArrowIcon = isRtl ? ChevronLeft : ChevronRight;
+  const navigate = useNavigate();
+  const { user, logout } = useAdminAuth();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/admin/login', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+      setLogoutConfirmOpen(false);
+    }
+  };
 
   const [width, setWidth] = useState<number>(getInitialWidth);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -323,6 +343,33 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
       {/* Bottom Controls & Storefront Link */}
       <div className="mt-auto pt-6 border-t border-border space-y-3 min-w-0">
+        {/* Admin Session Profile & Logout */}
+        <div className="p-2.5 rounded-xl bg-card border border-border flex items-center justify-between gap-2 min-w-0 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+              <ShieldCheck size={16} />
+            </span>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-foreground block truncate">
+                {user?.name || (isAr ? 'مدير النظام' : 'Admin')}
+              </span>
+              <span className="text-[10px] text-muted-foreground block truncate font-mono" dir="ltr">
+                {user?.email || 'admin@maestro.com'}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setLogoutConfirmOpen(true)}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
+            title={isAr ? 'تسجيل الخروج' : 'Log out'}
+            aria-label="Logout"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
+
         {/* Language & Theme Controls */}
         <div className="grid grid-cols-2 gap-2 min-w-0">
           <button
@@ -365,6 +412,56 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <ExternalLink size={14} className="opacity-80 group-hover:opacity-100 transition-opacity shrink-0 text-white dark:text-[#0B0F17]" />
         </Link>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {logoutConfirmOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-6 shadow-2xl space-y-4 text-foreground">
+            <div className="flex items-center justify-between">
+              <h4 className="text-base font-bold flex items-center gap-2 text-foreground">
+                <AlertCircle size={18} className="text-amber-500" />
+                <span>{isAr ? 'تأكيد تسجيل الخروج' : 'Confirm Logout'}</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {isAr
+                ? 'هل أنت متأكد من رغبتك في تسجيل الخروج من لوحة تحكم مايسترو؟ سيتوجب عليك تسجيل الدخول مجدداً للمتابعة.'
+                : 'Are you sure you want to log out of the Maestro admin panel? You will need to log in again to access settings.'}
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={isLoggingOut}
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <LogOut size={13} />
+                <span>{isLoggingOut ? (isAr ? 'جاري الخروج...' : 'Logging out...') : (isAr ? 'نعم، تسجيل الخروج' : 'Yes, Log Out')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vertical Drag Handle (مقبض السحب لتعديل عرض القائمة الجانبية) */}
       {isResizable && (

@@ -9,6 +9,17 @@ export interface BranchContactInfo {
   googleMapsUrl: string;
   workingHoursAr: string;
   workingHoursEn: string;
+  cityAr?: string;
+  cityEn?: string;
+}
+
+export interface DaySchedule {
+  dayId: string;
+  nameAr: string;
+  nameEn: string;
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
 }
 
 export interface OperatingSchedule {
@@ -19,6 +30,11 @@ export interface OperatingSchedule {
   emergencyNoticeAr: string;
   emergencyNoticeEn: string;
   showEmergencyBanner: boolean;
+  weeklySchedule?: DaySchedule[];
+  minOrderAmount?: number;
+  deliveryFee?: number;
+  estimatedDeliveryTimeAr?: string;
+  estimatedDeliveryTimeEn?: string;
 }
 
 export interface ThemeTokens {
@@ -29,4 +45,10 @@ export interface ThemeTokens {
   lightBg: string;
   lightSurface: string;
   lightBorder: string;
+  fontFamily?: string;
+  secondaryAccent?: string;
+  successColor?: string;
+  dangerColor?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
 }

@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { MessageCircle, Clock, MapPin, Trash2, ArrowLeft, ArrowRight, CheckCircle2, User, Phone } from 'lucide-react';
+import {
+  MessageCircle,
+  Clock,
+  MapPin,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  User,
+  Phone,
+  AlertCircle,
+  Sparkles,
+  X
+} from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { createOrder } from '../services/ordersService';
 import { formatSYP } from '../../../utils/currency';
@@ -9,6 +22,8 @@ import { Button } from '../../../common/components/Button/Button';
 import './CartSummary.css';
 
 export interface CartSummaryProps {
+  isCheckoutMode?: boolean;
+  onToggleCheckoutMode?: (mode: boolean) => void;
   onOrderSuccess?: (orderInfo: {
     orderNumber: string;
     customerName: string;
@@ -16,7 +31,11 @@ export interface CartSummaryProps {
   }) => void;
 }
 
-export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
+export const CartSummary: React.FC<CartSummaryProps> = ({
+  isCheckoutMode = false,
+  onToggleCheckoutMode,
+  onOrderSuccess,
+}) => {
   const { items, subtotal, deliveryFee = 0, grandTotal, total, clearCart, checkoutViaWhatsApp } = useCart();
   const { language, isRtl, t } = useLanguage();
   const { settings } = useSiteSettings();
@@ -24,7 +43,6 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
 
   const finalTotal = grandTotal ?? total ?? subtotal;
 
-  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,16 +51,6 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-
-  const handleClear = () => {
-    if (confirmClear) {
-      clearCart();
-      setConfirmClear(false);
-    } else {
-      setConfirmClear(true);
-      setTimeout(() => setConfirmClear(false), 3000);
-    }
-  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,126 +89,123 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
 
       // Reset form and clear cart
       clearCart();
-      setIsCheckoutMode(false);
+      if (onToggleCheckoutMode) {
+        onToggleCheckoutMode(false);
+      }
       setCustomerName('');
       setCustomerPhone('');
       setDeliveryAddress('');
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err?.message || 'Failed to place order');
+      setErrorMessage(err?.message || (isRtl ? 'تعذر إرسال الطلب، يرجى المحاولة ثانية' : 'Failed to place order'));
     }
   };
 
   const BackIcon = isRtl ? ArrowRight : ArrowLeft;
+  const ForwardIcon = isRtl ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="cart-summary-card">
-      {/* Subtotal */}
-      <div className="cart-summary-line">
-        <span>{t.common.cart.subtotal}</span>
-        <span className="cart-summary-val">
-          {formatSYP(subtotal, { locale: language })}
-        </span>
+    <footer className="cart-summary-footer">
+      {/* Financial Breakdown Section */}
+      <div className="cart-financial-sheet">
+        <div className="cart-summary-line">
+          <span className="cart-line-label">{t.common.cart.subtotal}</span>
+          <span className="cart-line-value font-numeric">
+            {formatSYP(subtotal, { locale: language })}
+          </span>
+        </div>
+
+        <div className="cart-summary-line">
+          <span className="cart-line-label">{isRtl ? 'خدمة التوصيل' : 'Delivery Service'}</span>
+          {deliveryFee > 0 ? (
+            <span className="cart-line-value font-numeric">
+              {formatSYP(deliveryFee, { locale: language })}
+            </span>
+          ) : (
+            <span className="cart-free-badge">
+              <Sparkles size={11} />
+              <span>{isRtl ? 'مجاني' : 'Free'}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Grand Total */}
+        <div className="cart-total-highlight-row">
+          <span className="cart-total-heading">{t.common.cart.total}</span>
+          <div className="cart-total-number-wrap font-numeric">
+            <span className="cart-total-amount">{formatSYP(finalTotal, { locale: language })}</span>
+          </div>
+        </div>
       </div>
 
-      {deliveryFee > 0 && (
-        <div className="cart-summary-line">
-          <span>{isRtl ? 'رسوم التوصيل' : 'Delivery Fee'}</span>
-          <span className="cart-summary-val">
-            {formatSYP(deliveryFee, { locale: language })}
+      {/* Unified Delivery & Prep Information Strip */}
+      <div className="cart-meta-info-card">
+        <div className="cart-meta-pill">
+          <Clock size={14} className="cart-meta-icon" />
+          <span className="cart-meta-text">
+            {t.common.cart.estimatedPrep}: <strong>{t.common.cart.prepMinutes}</strong>
+          </span>
+        </div>
+        <div className="cart-meta-divider" />
+        <div className="cart-meta-pill">
+          <MapPin size={14} className="cart-meta-icon emerald" />
+          <span className="cart-meta-text">{t.common.cart.deliveryNote}</span>
+        </div>
+      </div>
+
+      {/* Kitchen Closed Banner */}
+      {!isKitchenOpen && (
+        <div className="cart-kitchen-alert" role="alert">
+          <AlertCircle size={16} className="cart-alert-icon" />
+          <span>
+            {isRtl
+              ? 'المطعم مغلق حالياً، سيتم استلام الطلبات عند إعادة الافتتاح'
+              : 'Kitchen is currently closed for new orders'}
           </span>
         </div>
       )}
 
-      {/* Prep Time */}
-      <div className="cart-summary-badge-line">
-        <Clock size={16} />
-        <span>
-          {t.common.cart.estimatedPrep}: <strong>{t.common.cart.prepMinutes}</strong>
-        </span>
-      </div>
-
-      {/* Delivery Note */}
-      <div
-        className="cart-summary-badge-line"
-        style={{
-          background: 'rgba(16, 185, 129, 0.08)',
-          borderColor: 'rgba(16, 185, 129, 0.2)',
-          color: 'var(--emerald-500)',
-        }}
-      >
-        <MapPin size={16} />
-        <span>{t.common.cart.deliveryNote}</span>
-      </div>
-
-      {/* Total */}
-      <div className="cart-summary-total-line">
-        <span className="cart-total-label">{t.common.cart.total}</span>
-        <span className="cart-total-amount">
-          {formatSYP(finalTotal, { locale: language })}
-        </span>
-      </div>
-
-      {/* Kitchen Closed Notice */}
-      {!isKitchenOpen && (
-        <div
-          className="cart-summary-badge-line"
-          style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            borderColor: 'rgba(239, 68, 68, 0.25)',
-            color: 'var(--crimson-500, #ef4444)',
-            fontWeight: 700,
-          }}
-        >
-          <span>⚠️ {isRtl ? 'المطعم مغلق حالياً - لا يمكن إتمام الطلب الآن' : 'Kitchen is currently closed for new orders'}</span>
-        </div>
-      )}
-
-      {/* Checkout Form or Action Buttons */}
+      {/* Mode 2: Checkout Form */}
       {isCheckoutMode ? (
-        <form className="checkout-form-box animate-fade-in" onSubmit={handlePlaceOrder}>
-          <div className="checkout-form-title">
-            <MapPin size={16} color="var(--accent-gold)" />
-            <span>{t.common.cart.checkoutTitle}</span>
-          </div>
-
+        <form className="cart-checkout-form" onSubmit={handlePlaceOrder}>
           {errorMessage && (
-            <div
-              style={{
-                color: 'var(--crimson-500)',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-              }}
-            >
-              ⚠️ {errorMessage}
+            <div className="cart-form-error" role="alert">
+              <AlertCircle size={15} />
+              <span>{errorMessage}</span>
             </div>
           )}
 
-          {/* Name Field */}
-          <div className="checkout-input-group">
-            <label className="checkout-input-label">
-              <User size={13} style={{ display: 'inline', marginInlineEnd: '4px' }} />
-              {t.common.cart.nameLabel} *
+          {/* Customer Name */}
+          <div className="cart-field-group">
+            <label className="cart-field-label" htmlFor="cart-customer-name">
+              <User size={13} className="cart-field-icon" />
+              <span>{t.common.cart.nameLabel}</span>
+              <span className="cart-required-star">*</span>
             </label>
             <input
+              id="cart-customer-name"
               type="text"
-              className="checkout-input"
+              className="cart-input"
               placeholder={t.common.cart.namePlaceholder}
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
+              autoFocus
             />
           </div>
 
-          {/* Phone Field */}
-          <div className="checkout-input-group">
-            <label className="checkout-input-label">
-              <Phone size={13} style={{ display: 'inline', marginInlineEnd: '4px' }} />
-              {t.common.cart.phoneLabel} *
+          {/* Customer Phone */}
+          <div className="cart-field-group">
+            <label className="cart-field-label" htmlFor="cart-customer-phone">
+              <Phone size={13} className="cart-field-icon" />
+              <span>{t.common.cart.phoneLabel}</span>
+              <span className="cart-required-star">*</span>
             </label>
             <input
+              id="cart-customer-phone"
               type="tel"
-              className="checkout-input"
+              className="cart-input"
+              dir="ltr"
               placeholder={t.common.cart.phonePlaceholder}
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
@@ -208,28 +213,30 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
             />
           </div>
 
-          {/* Address Field */}
-          <div className="checkout-input-group">
-            <label className="checkout-input-label">
-              <MapPin size={13} style={{ display: 'inline', marginInlineEnd: '4px' }} />
-              {t.common.cart.addressLabel}
+          {/* Delivery Address */}
+          <div className="cart-field-group">
+            <label className="cart-field-label" htmlFor="cart-customer-address">
+              <MapPin size={13} className="cart-field-icon" />
+              <span>{t.common.cart.addressLabel}</span>
             </label>
             <input
+              id="cart-customer-address"
               type="text"
-              className="checkout-input"
+              className="cart-input"
               placeholder={t.common.cart.addressPlaceholder}
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
             />
           </div>
 
-          <div className="checkout-actions-row">
+          {/* Form Actions */}
+          <div className="cart-form-action-row">
             <Button
               type="button"
               variant="secondary"
-              size="sm"
+              size="md"
               leftIcon={<BackIcon size={16} />}
-              onClick={() => setIsCheckoutMode(false)}
+              onClick={() => onToggleCheckoutMode && onToggleCheckoutMode(false)}
             >
               {t.common.cart.backToItems}
             </Button>
@@ -238,56 +245,86 @@ export const CartSummary: React.FC<CartSummaryProps> = ({ onOrderSuccess }) => {
               type="submit"
               variant="primary"
               size="md"
-              leftIcon={<CheckCircle2 size={18} />}
+              leftIcon={<CheckCircle2 size={17} />}
               isLoading={isSubmitting}
               disabled={!isKitchenOpen || isSubmitting}
-              className="flex-grow"
+              className="cart-submit-order-btn"
             >
               {isSubmitting ? t.common.cart.placingOrder : t.common.cart.placeOrderBtn}
             </Button>
           </div>
         </form>
       ) : (
-        <div className="cart-summary-actions">
+        /* Mode 1: Cart Actions */
+        <div className="cart-primary-action-stack">
           {/* Proceed to In-App Checkout */}
           <Button
             type="button"
             variant="primary"
-            size="md"
-            onClick={() => setIsCheckoutMode(true)}
-            leftIcon={<CheckCircle2 size={18} />}
+            size="lg"
+            onClick={() => onToggleCheckoutMode && onToggleCheckoutMode(true)}
+            rightIcon={<ForwardIcon size={18} />}
             disabled={!isKitchenOpen}
+            className="cart-checkout-proceed-btn"
           >
             {t.common.cart.proceedToCheckout}
           </Button>
 
-          {/* Direct WhatsApp Checkout */}
+          {/* Direct WhatsApp Instant Checkout */}
           <button
             type="button"
-            className="whatsapp-checkout-btn"
+            className="cart-whatsapp-button"
             onClick={checkoutViaWhatsApp}
             disabled={!isKitchenOpen}
-            style={!isKitchenOpen ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+            aria-label={t.common.cart.checkoutWhatsApp}
           >
-            <MessageCircle size={20} />
-            <span>{t.common.cart.checkoutWhatsApp}</span>
+            <MessageCircle size={20} className="cart-whatsapp-icon" />
+            <span className="cart-whatsapp-label">{t.common.cart.checkoutWhatsApp}</span>
           </button>
 
-          {/* Clear Cart */}
-          <button
-            type="button"
-            className="clear-cart-btn"
-            onClick={handleClear}
-          >
-            <Trash2 size={14} />
-            <span>
-              {confirmClear
-                ? t.common.cart.clearConfirm
-                : t.common.cart.clearCart}
-            </span>
-          </button>
+          {/* Clear Cart Interactive Confirmation */}
+          <div className="cart-clear-container">
+            {confirmClear ? (
+              <div className="cart-clear-confirm-banner animate-fade-in">
+                <span className="cart-clear-prompt">
+                  {isRtl ? 'تفريغ السلة بالكامل؟' : 'Empty your whole cart?'}
+                </span>
+                <div className="cart-clear-button-group">
+                  <button
+                    type="button"
+                    className="cart-confirm-action-btn destructive"
+                    onClick={() => {
+                      clearCart();
+                      setConfirmClear(false);
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    <span>{isRtl ? 'نعم، أفرغ' : 'Yes, empty'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cart-confirm-action-btn cancel"
+                    onClick={() => setConfirmClear(false)}
+                  >
+                    <X size={13} />
+                    <span>{isRtl ? 'تراجع' : 'Cancel'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="cart-clear-link"
+                onClick={() => setConfirmClear(true)}
+              >
+                <Trash2 size={13} />
+                <span>{t.common.cart.clearCart}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
-    </div>
+    </footer>
   );
 };
+

@@ -68,10 +68,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
         <button
           type="button"
           onClick={() => onSelectCategory('all')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 border cursor-pointer ${
             selectedCategoryId === 'all'
               ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm'
-              : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 hover:text-slate-900 dark:hover:text-white shadow-xs'
+              : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-900 dark:hover:text-white shadow-xs'
           }`}
         >
           {isAr ? 'جميع التصنيفات' : 'All Categories'}
@@ -84,19 +84,19 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
             <div
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`group cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border ${
+              className={`group cursor-pointer flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border ${
                 isSelected
-                  ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/50 shadow-xs font-bold'
-                  : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 hover:text-slate-900 dark:hover:text-white shadow-xs'
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/40 shadow-xs font-bold'
+                  : 'bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-900 dark:hover:text-white shadow-xs'
               }`}
             >
               <span>{isAr ? cat.nameAr : cat.nameEn}</span>
               {typeof cat.itemCount === 'number' && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold font-numeric ${
                     isSelected
                       ? 'bg-amber-500 text-slate-950'
-                      : 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                      : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-zinc-200'
                   }`}
                 >
                   {cat.itemCount}
@@ -107,7 +107,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
                 <button
                   type="button"
                   onClick={(e) => openEditModal(cat, e)}
-                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   title={isAr ? 'تعديل التصنيف' : 'Edit Category'}
                 >
                   <Edit2 size={13} />
@@ -120,7 +120,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
                       onDeleteCategory(cat.id);
                     }
                   }}
-                  className="p-1 rounded-lg hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  className="p-1 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-colors"
                   title={isAr ? 'حذف التصنيف' : 'Delete Category'}
                 >
                   <Trash2 size={13} />
@@ -135,9 +135,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           <button
             type="button"
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-xs font-bold text-amber-600 dark:text-amber-400 transition-colors shrink-0 shadow-xs"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 text-xs font-bold text-amber-600 dark:text-amber-400 transition-colors shrink-0 shadow-xs cursor-pointer"
           >
-            <FolderPlus size={16} />
+            <FolderPlus size={15} />
             <span>{isAr ? 'تصنيف جديد' : 'New Category'}</span>
           </button>
         )}

@@ -14,7 +14,12 @@ import { AboutSection } from '../features/about/AboutSection';
 import { Footer } from '../features/navigation/Footer';
 import { FloatingWhatsApp } from '../common/components/FloatingWhatsApp/FloatingWhatsApp';
 
-import { AdminDashboardPage } from '../features/admin';
+import {
+  AdminDashboardPage,
+  AdminLoginPage,
+  AdminRouteGuard,
+  AdminAuthProvider,
+} from '../features/admin';
 
 /**
  * Customer-Facing Storefront Home Page
@@ -38,7 +43,7 @@ export const StorefrontPage: React.FC = () => {
 };
 
 /**
- * Main Application with Customer Storefront & Administration Routes
+ * Main Application with Customer Storefront & Protected Administration Routes
  */
 export const App: React.FC = () => {
   return (
@@ -47,16 +52,28 @@ export const App: React.FC = () => {
         <ThemeProvider>
           <LanguageProvider>
             <CartProvider>
-              <Routes>
-                {/* Public Customer Storefront */}
-                <Route path="/" element={<StorefrontPage />} />
+              <AdminAuthProvider>
+                <Routes>
+                  {/* Public Customer Storefront */}
+                  <Route path="/" element={<StorefrontPage />} />
 
-                {/* Executive Administration Platform */}
-                <Route path="/admin" element={<AdminDashboardPage />} />
+                  {/* Admin Authentication Login Page */}
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                {/* Catch-all redirect to storefront */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Protected Executive Administration Platform */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRouteGuard>
+                        <AdminDashboardPage />
+                      </AdminRouteGuard>
+                    }
+                  />
+
+                  {/* Fallback redirect to storefront */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AdminAuthProvider>
             </CartProvider>
           </LanguageProvider>
         </ThemeProvider>

@@ -58,34 +58,34 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog Card */}
       <div
-        className={`relative w-full ${sizeClasses[size]} rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-2xl text-foreground z-10 my-8 max-h-[90vh] flex flex-col transform transition-all animate-scale-up`}
+        className={`relative w-full ${sizeClasses[size]} rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 sm:p-7 shadow-2xl text-slate-900 dark:text-zinc-100 z-10 my-8 max-h-[90vh] flex flex-col transform transition-all animate-scale-up`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-border pb-5 mb-5 shrink-0">
+        <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-4 mb-4 shrink-0">
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
               {title}
             </h3>
-            {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">{subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Scrollable Body Content */}
-        <div className="overflow-y-auto flex-1 pr-1 pl-1 space-y-5 custom-admin-scrollbar">
+        <div className="overflow-y-auto flex-1 pr-1 pl-1 space-y-4 custom-admin-scrollbar">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-slate-200 dark:border-white/10 pt-5 mt-5 flex items-center justify-end gap-3 shrink-0">
+          <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-4 mt-4 flex items-center justify-end gap-3 shrink-0">
             {footer}
           </div>
         )}

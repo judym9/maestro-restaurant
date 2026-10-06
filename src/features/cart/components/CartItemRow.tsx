@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Plus, Trash2, Flame } from 'lucide-react';
+import { Minus, Plus, Trash2, Flame, FileText } from 'lucide-react';
 import type { CartItem } from '../types/cart.types';
 import { useCart } from '../hooks/useCart';
 import { ImageWithFallback } from '../../../common/components/ImageWithFallback/ImageWithFallback';
@@ -27,10 +27,18 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({ item }) => {
   const unitPrice = item.price ?? item.unitPrice ?? 0;
   const lineTotal = unitPrice * item.quantity;
 
+  const handleDecrement = () => {
+    if (item.quantity <= 1) {
+      removeItem(item.id);
+    } else {
+      updateQuantity(item.id, item.quantity - 1);
+    }
+  };
+
   return (
-    <div className="cart-item-row animate-fade-in">
-      {/* Thumbnail */}
-      <div className="cart-item-thumb">
+    <article className="cart-item-card" aria-label={name}>
+      {/* Food Thumbnail */}
+      <div className="cart-item-media">
         <ImageWithFallback
           src={imageAsset.src}
           webpSrc={imageAsset.webp}
@@ -40,77 +48,84 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({ item }) => {
         />
       </div>
 
-      {/* Details */}
-      <div className="cart-item-details">
-        <h4 className="cart-item-name" title={name}>
-          {name}
-        </h4>
+      {/* Item Information & Customizations */}
+      <div className="cart-item-body">
+        <div className="cart-item-title-row">
+          <h4 className="cart-item-title" title={name}>
+            {name}
+          </h4>
+          <button
+            type="button"
+            className="cart-item-delete-btn"
+            onClick={() => removeItem(item.id)}
+            aria-label={`${t.common.cart.remove} ${name}`}
+            title={t.common.cart.remove}
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
 
-        <div className="cart-item-meta">
-          {optionName && <span className="cart-item-tag">{optionName}</span>}
+        {/* Customization Pills */}
+        <div className="cart-item-chips">
+          {optionName && <span className="cart-chip option-chip">{optionName}</span>}
           {item.spiciness && item.spiciness !== 'mild' && (
-            <span className="cart-item-tag spicy">
-              <Flame size={11} style={{ display: 'inline', marginInlineEnd: '2px' }} />
-              {item.spiciness === 'extraSpicy'
-                ? isRtl ? 'حار ناري' : 'Fiery Hot'
-                : isRtl ? 'متوسط' : 'Medium'}
+            <span className="cart-chip spicy-chip">
+              <Flame size={12} className="cart-chip-icon" />
+              <span>
+                {item.spiciness === 'extraSpicy'
+                  ? isRtl ? 'حار ناري' : 'Fiery Hot'
+                  : isRtl ? 'متوسط' : 'Medium'}
+              </span>
+            </span>
+          )}
+          {item.instructions && (
+            <span className="cart-chip note-chip" title={item.instructions}>
+              <FileText size={11} className="cart-chip-icon" />
+              <span>{item.instructions}</span>
             </span>
           )}
         </div>
 
-        {item.instructions && (
-          <p className="cart-item-note" title={item.instructions}>
-            {t.common.cart.instructions}: {item.instructions}
-          </p>
-        )}
-      </div>
-
-      {/* Actions & Price */}
-      <div className="cart-item-actions-col">
-        <div className="cart-item-pricing">
-          <span className="cart-item-price" title={isRtl ? 'سعر المفرد' : 'Unit Price'}>
-            {formatSYP(unitPrice, { locale: language })}
-          </span>
-          {item.quantity > 1 && (
-            <span className="cart-item-line-total">
-              {isRtl ? 'الإجمالي: ' : 'Total: '}
+        {/* Price & Stepper Row */}
+        <div className="cart-item-footer">
+          <div className="cart-item-price-block">
+            <span className="cart-item-total-price">
               {formatSYP(lineTotal, { locale: language })}
             </span>
-          )}
-        </div>
+            {item.quantity > 1 && (
+              <span className="cart-item-unit-calc">
+                {formatSYP(unitPrice, { locale: language })} × {item.quantity}
+              </span>
+            )}
+          </div>
 
-        <div className="cart-item-qty-row">
-          <div className="cart-qty-ctrl">
+          {/* Stepper with WCAG compliant touch targets */}
+          <div className="cart-stepper" role="group" aria-label="Quantity selector">
             <button
               type="button"
-              className="cart-qty-btn"
-              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-              aria-label="Decrease quantity"
+              className={`cart-stepper-btn ${item.quantity === 1 ? 'is-danger' : ''}`}
+              onClick={handleDecrement}
+              aria-label={item.quantity === 1 ? `${t.common.cart.remove} ${name}` : 'Decrease quantity'}
             >
-              <Minus size={13} />
+              {item.quantity === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
             </button>
-            <span className="cart-qty-val">{item.quantity}</span>
+
+            <span className="cart-stepper-value" aria-live="polite">
+              {item.quantity}
+            </span>
+
             <button
               type="button"
-              className="cart-qty-btn"
+              className="cart-stepper-btn"
               onClick={() => updateQuantity(item.id, item.quantity + 1)}
               aria-label="Increase quantity"
             >
               <Plus size={13} />
             </button>
           </div>
-
-          <button
-            type="button"
-            className="cart-remove-btn"
-            onClick={() => removeItem(item.id)}
-            aria-label={t.common.cart.remove}
-            title={t.common.cart.remove}
-          >
-            <Trash2 size={15} />
-          </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
+

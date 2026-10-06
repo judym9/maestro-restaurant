@@ -27,22 +27,22 @@ export const PromoPagination: React.FC<PromoPaginationProps> = ({
   const NextIcon = isRtl ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200/80 dark:border-white/10 flex-wrap">
-      <span className="text-xs text-[#64748B] dark:text-slate-400">
+    <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-200/80 dark:border-zinc-800/80 flex-wrap">
+      <span className="text-xs text-slate-500 dark:text-zinc-400 font-numeric">
         {isAr
           ? `عرض الصفحة ${currentPage} من أصل ${totalPages}`
           : `Showing Page ${currentPage} of ${totalPages}`}
       </span>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
           onClick={onPrev}
           disabled={currentPage === 1}
-          className="p-2 rounded-xl bg-[#F8F5EE] dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-[#334155] dark:text-slate-300 hover:text-[#0F172A] dark:hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer shadow-xs"
           aria-label="Previous Page"
         >
-          <PrevIcon size={16} />
+          <PrevIcon size={15} />
         </button>
 
         {Array.from({ length: totalPages }).map((_, idx) => {
@@ -53,10 +53,10 @@ export const PromoPagination: React.FC<PromoPaginationProps> = ({
               key={pageNum}
               type="button"
               onClick={() => onPageChange(pageNum)}
-              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all font-numeric cursor-pointer ${
                 isActive
-                  ? 'bg-[#D97706] text-white shadow-md shadow-amber-500/20'
-                  : 'bg-[#F8F5EE] dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-[#334155] dark:text-slate-300 hover:text-[#0F172A] dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-xs'
               }`}
             >
               {pageNum}
@@ -68,10 +68,10 @@ export const PromoPagination: React.FC<PromoPaginationProps> = ({
           type="button"
           onClick={onNext}
           disabled={currentPage === totalPages}
-          className="p-2 rounded-xl bg-[#F8F5EE] dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-[#334155] dark:text-slate-300 hover:text-[#0F172A] dark:hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 cursor-pointer shadow-xs"
           aria-label="Next Page"
         >
-          <NextIcon size={16} />
+          <NextIcon size={15} />
         </button>
       </div>
     </div>
