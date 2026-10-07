@@ -1,425 +1,411 @@
 import React, { useState, useEffect } from 'react';
-import { X, Tag, Sparkles } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../../../app/providers/LanguageProvider';
 import type { AdminPromoDeal, PromoFormData } from '../../types/promotions.types';
-import { MealAssets } from '../../../../utils/imageRegistry';
+import { getMealImage } from '../../../../utils/imageRegistry';
 
-interface PromoFormModalProps {
+export interface PromoFormModalProps {
   isOpen: boolean;
+  editingPromo: AdminPromoDeal | null;
   onClose: () => void;
   onSave: (data: PromoFormData) => void;
-  initialData?: AdminPromoDeal | null;
-  language: 'ar' | 'en';
 }
+
+const PRESET_IMAGE_KEYS = [
+  'shawarma-tower',
+  'shawarma-cake',
+  'shawarma-platters',
+  'shawarma-spit',
+  'broasted-pieces',
+  'broasted-chips',
+  'supreme-meal',
+  'crispy-meal',
+  'fajita-sub',
+  'crispy-baguettes',
+];
 
 export const PromoFormModal: React.FC<PromoFormModalProps> = ({
   isOpen,
+  editingPromo,
   onClose,
   onSave,
-  initialData,
-  language,
 }) => {
-  const isAr = language === 'ar';
+  const { language } = useLanguage();
 
   const [titleAr, setTitleAr] = useState('');
   const [titleEn, setTitleEn] = useState('');
-  const [descAr, setDescAr] = useState('');
-  const [descEn, setDescEn] = useState('');
+  const [descriptionAr, setDescriptionAr] = useState('');
+  const [descriptionEn, setDescriptionEn] = useState('');
   const [badgeAr, setBadgeAr] = useState('');
   const [badgeEn, setBadgeEn] = useState('');
   const [imageKey, setImageKey] = useState('shawarma-tower');
-  const [price, setPrice] = useState<number>(210000);
-  const [originalPrice, setOriginalPrice] = useState<number>(280000);
-  const [discountPercent, setDiscountPercent] = useState<number>(25);
+  const [price, setPrice] = useState<number | ''>('');
+  const [originalPrice, setOriginalPrice] = useState<number | ''>('');
   const [remainingDays, setRemainingDays] = useState<number>(7);
-  const [isActive, setIsActive] = useState<boolean>(true);
+  const [featured, setFeatured] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Lock body scroll and listen for Escape key
+  // Auto-calculated discount percentage
+  const calculatedDiscount =
+    typeof price === 'number' && typeof originalPrice === 'number' && originalPrice > price && originalPrice > 0
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : 0;
+
   useEffect(() => {
     if (!isOpen) return;
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
-
-  // Sync initial data
-  useEffect(() => {
-    if (initialData) {
-      setTitleAr(initialData.titleAr);
-      setTitleEn(initialData.titleEn);
-      setDescAr(initialData.descriptionAr);
-      setDescEn(initialData.descriptionEn);
-      setBadgeAr(initialData.badgeAr);
-      setBadgeEn(initialData.badgeEn);
-      setImageKey(initialData.imageKey);
-      setPrice(initialData.price);
-      setOriginalPrice(initialData.originalPrice);
-      setDiscountPercent(initialData.discountPercent);
-      setRemainingDays(initialData.remainingDays);
-      setIsActive(initialData.isActive);
+    if (editingPromo) {
+      setTitleAr(editingPromo.titleAr);
+      setTitleEn(editingPromo.titleEn);
+      setDescriptionAr(editingPromo.descriptionAr);
+      setDescriptionEn(editingPromo.descriptionEn);
+      setBadgeAr(editingPromo.badgeAr);
+      setBadgeEn(editingPromo.badgeEn);
+      setImageKey(editingPromo.imageKey);
+      setPrice(editingPromo.price);
+      setOriginalPrice(editingPromo.originalPrice);
+      setRemainingDays(editingPromo.remainingDays);
+      setFeatured(editingPromo.featured);
+      setIsActive(editingPromo.isActive);
     } else {
       setTitleAr('');
       setTitleEn('');
-      setDescAr('');
-      setDescEn('');
-      setBadgeAr('عرض التوفير الملكي');
-      setBadgeEn('Royal Special Deal');
+      setDescriptionAr('');
+      setDescriptionEn('');
+      setBadgeAr('عرض خاص');
+      setBadgeEn('Special Deal');
       setImageKey('shawarma-tower');
-      setPrice(210000);
-      setOriginalPrice(280000);
-      setDiscountPercent(25);
+      setPrice('');
+      setOriginalPrice('');
       setRemainingDays(7);
+      setFeatured(false);
       setIsActive(true);
     }
-  }, [initialData, isOpen]);
-
-  // Auto-calculate discount percentage when original price or price changes
-  const handleOriginalPriceChange = (newOrig: number) => {
-    setOriginalPrice(newOrig);
-    if (newOrig > 0 && price > 0 && newOrig > price) {
-      const calcDiscount = Math.round(((newOrig - price) / newOrig) * 100);
-      setDiscountPercent(calcDiscount);
-    }
-  };
-
-  const handlePriceChange = (newPrice: number) => {
-    setPrice(newPrice);
-    if (originalPrice > 0 && newPrice > 0 && originalPrice > newPrice) {
-      const calcDiscount = Math.round(((originalPrice - newPrice) / originalPrice) * 100);
-      setDiscountPercent(calcDiscount);
-    }
-  };
-
-  const currentSavings = Math.max(0, originalPrice - price);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!titleAr.trim() || !titleEn.trim()) return;
-
-    onSave({
-      id: initialData?.id,
-      titleAr: titleAr.trim(),
-      titleEn: titleEn.trim(),
-      descriptionAr: descAr.trim(),
-      descriptionEn: descEn.trim(),
-      badgeAr: badgeAr.trim(),
-      badgeEn: badgeEn.trim(),
-      imageKey,
-      price: Number(price),
-      originalPrice: Number(originalPrice),
-      discountPercent: Number(discountPercent),
-      remainingDays: Number(remainingDays),
-      featured: initialData?.featured ?? false,
-      isActive,
-      sortOrder: initialData?.sortOrder ?? 1,
-    });
-  };
+    setErrors({});
+  }, [isOpen, editingPromo]);
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
 
-      {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex flex-col p-6 shadow-2xl z-10 text-slate-900 dark:text-zinc-100 animate-in fade-in zoom-in-95 duration-200">
-        {/* Fixed Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-4 mb-4 shrink-0">
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
-              <Sparkles size={18} />
-            </span>
-            <span>
-              {initialData
-                ? (isAr ? 'تعديل بيانات الباقة الملكية' : 'Edit Royal Offer')
-                : (isAr ? 'إضافة باقة أو عرض ملكي جديد' : 'New Royal Offer')}
-            </span>
-          </h3>
+    if (!titleAr.trim()) {
+      newErrors.titleAr = language === 'ar' ? 'عنوان العرض بالعربية مطلوب' : 'Arabic title is required';
+    }
+    if (!titleEn.trim()) {
+      newErrors.titleEn = language === 'ar' ? 'عنوان العرض بالإنجليزية مطلوب' : 'English title is required';
+    }
+    if (price === '' || Number(price) <= 0) {
+      newErrors.price = language === 'ar' ? 'يرجى إدخال سعر العرض' : 'Valid promo price is required';
+    }
+    if (originalPrice === '' || Number(originalPrice) <= 0) {
+      newErrors.originalPrice = language === 'ar' ? 'يرجى إدخال السعر الأصلي' : 'Original price is required';
+    } else if (typeof price === 'number' && Number(originalPrice) < price) {
+      newErrors.originalPrice = language === 'ar' ? 'السعر الأصلي يجب أن يكون أكبر من سعر العرض' : 'Original price must exceed promo price';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    onSave({
+      id: editingPromo ? editingPromo.id : undefined,
+      titleAr: titleAr.trim(),
+      titleEn: titleEn.trim(),
+      descriptionAr: descriptionAr.trim(),
+      descriptionEn: descriptionEn.trim(),
+      badgeAr: badgeAr.trim() || 'عرض خاص',
+      badgeEn: badgeEn.trim() || 'Special Deal',
+      imageKey,
+      price: Number(price),
+      originalPrice: Number(originalPrice),
+      discountPercent: calculatedDiscount,
+      remainingDays: Number(remainingDays) || 7,
+      featured,
+      isActive,
+      sortOrder: editingPromo ? editingPromo.sortOrder : 1,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true">
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+
+      <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] shadow-2xl z-10 overflow-hidden animate-scale-up">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-['Cairo',sans-serif]">
+                {editingPromo
+                  ? language === 'ar'
+                    ? 'تعديل بيانات العرض الترويجي'
+                    : 'Edit Promotional Deal'
+                  : language === 'ar'
+                  ? 'إنشاء عرض ملكي جديد'
+                  : 'Create Royal Deal'}
+              </h2>
+            </div>
+          </div>
 
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              onClose();
-            }}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            aria-label="Close modal"
+            onClick={onClose}
+            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg transition-colors"
           >
-            <X size={18} />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Form Body Content */}
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-admin-scrollbar">
-            {/* 1. Deal Titles (Arabic & English) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'عنوان الباقة بالعربية (استخدم + للفصل بين الأصناف) *' : 'Offer Title (Arabic) *'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={titleAr}
-                  onChange={(e) => setTitleAr(e.target.value)}
-                  placeholder={isAr ? 'مثال: برج الشاورما الملكي + تومية وبطاطا' : 'Offer title in Arabic'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors"
-                  dir="rtl"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'عنوان الباقة بالإنجليزية *' : 'Offer Title (English) *'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={titleEn}
-                  onChange={(e) => setTitleEn(e.target.value)}
-                  placeholder="e.g. Royal Shawarma Tower + Family Fries"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* 2. Badge Labels (Arabic & English) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'شارة العرض الترويجية' : 'Offer Badge Label'}
-                </label>
-                <div className="relative flex items-center">
-                  <Tag size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={badgeAr}
-                    onChange={(e) => setBadgeAr(e.target.value)}
-                    placeholder={isAr ? 'مثال: عرض التوفير الملكي' : 'e.g. Royal Deal'}
-                    className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'الشارة بالإنجليزية' : 'Badge (English)'}
-                </label>
-                <input
-                  type="text"
-                  value={badgeEn}
-                  onChange={(e) => setBadgeEn(e.target.value)}
-                  placeholder="e.g. Royal Special Deal"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* 3. Pricing Grid (Row 1: Original Price & Offer Price) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'السعر الأصلي للباقة (ل.س)' : 'Original Bundle Price (SYP)'}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1000}
-                  value={originalPrice || ''}
-                  onChange={(e) => handleOriginalPriceChange(Number(e.target.value))}
-                  placeholder="280000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-numeric"
-                  dir="ltr"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'سعر العرض المخفض (ل.س) *' : 'Discounted Offer Price (SYP) *'}
-                </label>
-                <input
-                  type="number"
-                  required
-                  min={1000}
-                  step={1000}
-                  value={price}
-                  onChange={(e) => handlePriceChange(Number(e.target.value))}
-                  placeholder="210000"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-amber-500 dark:text-amber-400 font-bold focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-numeric"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* 4. Live Value Preview Strip: Savings + Discount % */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 dark:text-zinc-400 font-medium">
-                  {isAr ? 'مبلغ التوفير المحسوب للزبون:' : 'Customer Savings Amount:'}
-                </span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 font-numeric">
-                  {currentSavings.toLocaleString()} {isAr ? 'ل.س' : 'SYP'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 dark:text-zinc-400 font-medium">
-                  {isAr ? 'نسبة الخصم:' : 'Discount Rate:'}
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold font-numeric">
-                  -{discountPercent}%
-                </span>
-              </div>
-            </div>
-
-            {/* 5. Pricing Grid (Row 2: Discount % & Validity Days) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'تعديل نسبة الخصم يدوياً (%)' : 'Manual Discount % Override'}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={discountPercent}
-                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-rose-500 font-bold focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-numeric"
-                  dir="ltr"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'فترة الصلاحية المتبقية (بالأيام)' : 'Remaining Validity Period (Days)'}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={remainingDays}
-                  onChange={(e) => setRemainingDays(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-numeric"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* 6. Image Asset Selection */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                {isAr ? 'الصورة المرفقة للباقة' : 'Associated Photo Asset'}
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+          {/* Titles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'عنوان العرض (بالعربية) *' : 'Deal Title (Arabic) *'}
               </label>
-              <select
-                value={imageKey}
-                onChange={(e) => setImageKey(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors cursor-pointer"
-              >
-                {Object.keys(MealAssets).map((k) => (
-                  <option key={k} value={k} className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
-                    {MealAssets[k]?.altAr || k}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                value={titleAr}
+                onChange={(e) => setTitleAr(e.target.value)}
+                placeholder="مثال: باقة برج الشاورما الملكي"
+                className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] ${
+                  errors.titleAr ? 'border-rose-500' : 'border-[var(--border-subtle)]'
+                }`}
+                dir="rtl"
+              />
+              {errors.titleAr && (
+                <span className="text-[11px] text-rose-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.titleAr}
+                </span>
+              )}
             </div>
 
-            {/* 7. Active Status Toggle */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
-              <div>
-                <span className="block text-xs font-bold text-slate-900 dark:text-zinc-100">
-                  {isAr ? 'حالة تفعيل العرض' : 'Offer Activation Status'}
-                </span>
-                <span className="text-[11px] text-slate-500 dark:text-zinc-400">
-                  {isAr
-                    ? 'عند تفعيل العرض سيظهر مباشرة للزبائن في الصفحة الرئيسية وقسم العروض'
-                    : 'When active, this offer appears directly to customers on the home page'}
-                </span>
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-amber-500 focus:ring-0 accent-amber-500 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-                  {isActive ? (isAr ? 'مفعل' : 'Active') : (isAr ? 'معطل' : 'Disabled')}
-                </span>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'عنوان العرض (بالإنجليزية) *' : 'Deal Title (English) *'}
               </label>
+              <input
+                type="text"
+                value={titleEn}
+                onChange={(e) => setTitleEn(e.target.value)}
+                placeholder="e.g. Royal Shawarma Feast"
+                className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] ${
+                  errors.titleEn ? 'border-rose-500' : 'border-[var(--border-subtle)]'
+                }`}
+                dir="ltr"
+              />
+              {errors.titleEn && (
+                <span className="text-[11px] text-rose-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.titleEn}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Pricing & Auto-calculated Discount */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'سعر العرض المخفض (ل.س) *' : 'Promo Price (SP) *'}
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={price}
+                onChange={(e) => setPrice(e.target.value ? Number(e.target.value) : '')}
+                placeholder="210000"
+                className="px-3.5 py-2 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
+              />
+              {errors.price && (
+                <span className="text-[11px] text-rose-400">{errors.price}</span>
+              )}
             </div>
 
-            {/* 8. Optional Descriptions (Arabic & English) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'محتويات وتفاصيل الباقة بالعربية' : 'Bundle Contents & Details in Arabic'}
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder={isAr ? 'وصف للمكونات والوجبات المشمولة بالباقة...' : 'Bundle details in Arabic...'}
-                  value={descAr}
-                  onChange={(e) => setDescAr(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm leading-relaxed transition-colors"
-                  dir="rtl"
-                />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'السعر الأصلي قبل الخصم *' : 'Original Value (SP) *'}
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={originalPrice}
+                onChange={(e) => setOriginalPrice(e.target.value ? Number(e.target.value) : '')}
+                placeholder="280000"
+                className="px-3.5 py-2 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
+              />
+              {errors.originalPrice && (
+                <span className="text-[11px] text-rose-400">{errors.originalPrice}</span>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-                  {isAr ? 'محتويات وتفاصيل الباقة بالإنجليزية' : 'Bundle Contents & Details in English'}
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Offer details in English..."
-                  value={descEn}
-                  onChange={(e) => setDescEn(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm leading-relaxed transition-colors text-left"
-                  dir="ltr"
-                />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'نسبة الخصم المحسوبة' : 'Calculated Discount'}
+              </label>
+              <div className="px-3.5 py-2 rounded-xl text-sm font-black bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-emerald-400 font-mono flex items-center justify-between">
+                <span>{calculatedDiscount}%</span>
+                <span className="text-[11px] text-[var(--text-muted)] font-normal">
+                  {language === 'ar' ? 'توفير تلقائي' : 'Auto Savings'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Fixed Footer Actions */}
-          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-end gap-3 mt-4 shrink-0">
+          {/* Badges & Expiration Days */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'شارة العرض (بالعربية)' : 'Badge Label (AR)'}
+              </label>
+              <input
+                type="text"
+                value={badgeAr}
+                onChange={(e) => setBadgeAr(e.target.value)}
+                placeholder="عرض التوفير الملكي"
+                className="px-3.5 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
+                dir="rtl"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'شارة العرض (بالإنجليزية)' : 'Badge Label (EN)'}
+              </label>
+              <input
+                type="text"
+                value={badgeEn}
+                onChange={(e) => setBadgeEn(e.target.value)}
+                placeholder="Royal Deal"
+                className="px-3.5 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
+                dir="ltr"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'صلاحية العرض (أيام)' : 'Duration (Days)'}
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="90"
+                value={remainingDays}
+                onChange={(e) => setRemainingDays(Number(e.target.value) || 7)}
+                className="px-3.5 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'تفاصيل العرض (بالعربية)' : 'Description (AR)'}
+              </label>
+              <textarea
+                rows={2}
+                value={descriptionAr}
+                onChange={(e) => setDescriptionAr(e.target.value)}
+                className="px-3.5 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none resize-none"
+                dir="rtl"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">
+                {language === 'ar' ? 'تفاصيل العرض (بالإنجليزية)' : 'Description (EN)'}
+              </label>
+              <textarea
+                rows={2}
+                value={descriptionEn}
+                onChange={(e) => setDescriptionEn(e.target.value)}
+                className="px-3.5 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none resize-none"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          {/* Image Key Selector */}
+          <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <div className="w-16 h-16 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)]">
+              <img
+                src={imageKey.startsWith('http') || imageKey.startsWith('data:') ? imageKey : getMealImage(imageKey).src}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+                {language === 'ar' ? 'صورة العرض الترويجي' : 'Promotion Image Asset'}
+              </label>
+              <select
+                value={imageKey}
+                onChange={(e) => setImageKey(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none"
+              >
+                {PRESET_IMAGE_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Featured & Active Switches */}
+          <div className="flex items-center gap-6 p-3.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
+                className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
+              />
+              <span>{language === 'ar' ? 'عرض مميز في واجهة الموقع' : 'Featured in Hero Banner'}</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
+              />
+              <span>{language === 'ar' ? 'العرض نشط ومتاح للطلب' : 'Active Deal'}</span>
+            </label>
+          </div>
+
+          {/* Footer Controls */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-              }}
-              className="px-4 py-2 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-xs font-semibold cursor-pointer"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors min-h-[42px]"
             >
-              {isAr ? 'إلغاء' : 'Cancel'}
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
-
             <button
               type="submit"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 text-xs cursor-pointer"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
             >
-              {isAr ? 'حفظ العرض' : 'Save Promotion'}
+              {editingPromo
+                ? language === 'ar'
+                  ? 'حفظ التعديلات'
+                  : 'Save Changes'
+                : language === 'ar'
+                ? 'نشر العرض'
+                : 'Publish Deal'}
             </button>
           </div>
         </form>
@@ -427,3 +413,5 @@ export const PromoFormModal: React.FC<PromoFormModalProps> = ({
     </div>
   );
 };
+
+export default PromoFormModal;

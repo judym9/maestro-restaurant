@@ -22,7 +22,20 @@ const STORAGE_KEY = 'maestro_admin_auth_session';
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AdminUser | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedSession = localStorage.getItem(STORAGE_KEY);
+        if (savedSession) {
+          const parsed = JSON.parse(savedSession) as AdminUser;
+          if (parsed && parsed.email) return parsed;
+        }
+      } catch {
+        // Fall through
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Initialize session on mount
@@ -31,18 +44,24 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const initAuth = async () => {
       try {
-        // 1. Check local session storage first for immediate offline/local recovery
+        // 1. Check local session storage first
         const savedSession = localStorage.getItem(STORAGE_KEY);
         if (savedSession) {
           try {
             const parsed = JSON.parse(savedSession) as AdminUser;
             if (parsed && parsed.email) {
               if (isMounted) setUser(parsed);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+              if (isMounted) setUser(null);
             }
           } catch (e) {
             console.warn('[AdminAuth] Invalid saved session:', e);
             localStorage.removeItem(STORAGE_KEY);
+            if (isMounted) setUser(null);
           }
+        } else {
+          if (isMounted) setUser(null);
         }
 
         // 2. If Supabase is configured, check active Supabase Auth session
@@ -139,8 +158,14 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // 2. Resilient Built-in Admin Authentication (Works offline or when Supabase is in mock mode)
       const isDefaultAdmin =
-        (trimmedInput === 'admin' || trimmedInput === 'admin@maestro.com' || trimmedInput === 'manager@maestro.com') &&
-        (trimmedPass === 'maestro' || trimmedPass === 'admin123' || trimmedPass === 'maestro2026' || trimmedPass === 'admin');
+        (trimmedInput === 'admin' ||
+          trimmedInput === 'admin@elmaestro.com' ||
+          trimmedInput === 'admin@maestro.com' ||
+          trimmedInput === 'manager@maestro.com') &&
+        (trimmedPass === 'admin123' ||
+          trimmedPass === 'maestro' ||
+          trimmedPass === 'maestro2026' ||
+          trimmedPass === 'admin');
 
       // Also allow any valid email with secure password length >= 6 for testing flexibility
       const isTestAdmin = trimmedInput.includes('@') && trimmedPass.length >= 6;

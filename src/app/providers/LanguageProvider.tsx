@@ -202,3 +202,7 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
+export const useI18n = useLanguage;
+export const I18nProvider = LanguageProvider;
+

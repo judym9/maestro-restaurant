@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'mastro-luxury';
 
 export interface ThemeContextType {
   theme: Theme;
@@ -20,13 +20,13 @@ export const getSavedTheme = (): Theme | null => {
   if (typeof window === 'undefined') return null;
   try {
     const saved = localStorage.getItem(PRIMARY_THEME_KEY);
-    if (saved === 'dark' || saved === 'light') {
-      return saved;
+    if (saved === 'dark' || saved === 'light' || saved === 'mastro-luxury') {
+      return saved as Theme;
     }
     for (const key of LEGACY_THEME_KEYS) {
       const legacy = localStorage.getItem(key);
-      if (legacy === 'dark' || legacy === 'light') {
-        return legacy;
+      if (legacy === 'dark' || legacy === 'light' || legacy === 'mastro-luxury') {
+        return legacy as Theme;
       }
     }
   } catch (err) {
@@ -66,8 +66,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const applyThemeToDom = (targetTheme: Theme) => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', targetTheme);
-      document.documentElement.classList.toggle('dark', targetTheme === 'dark');
+      document.documentElement.classList.toggle('dark', targetTheme === 'dark' || targetTheme === 'mastro-luxury');
       document.documentElement.classList.toggle('light', targetTheme === 'light');
+      document.documentElement.classList.toggle('mastro-luxury', targetTheme === 'mastro-luxury');
     }
   };
 
@@ -141,7 +142,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleTheme = () => {
     setThemeState((prev) => {
-      const nextTheme: Theme = prev === 'dark' ? 'light' : 'dark';
+      const nextTheme: Theme = prev === 'dark' ? 'mastro-luxury' : prev === 'mastro-luxury' ? 'light' : 'dark';
       try {
         localStorage.setItem(PRIMARY_THEME_KEY, nextTheme);
         localStorage.setItem('mastro_theme', nextTheme);

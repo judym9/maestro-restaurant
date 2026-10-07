@@ -127,6 +127,59 @@ html.dark,
 }
 
 /* ==========================================================================
+   MAESTRO LUXURY THEME: Ultra-Exclusive Obsidian Velvet & Royal Gold Accent
+   - Deepest onyx obsidian background (#06090E)
+   - Rich espresso slate secondary (#0D121D)
+   - Luminous dark surfaces (#131926) with refined gold border accents
+   - Radiant 24K gold highlights (#F59E0B / #D97706)
+   - Supreme contrast & warm ambient gold glow
+   ========================================================================== */
+[data-theme='mastro-luxury'],
+html.mastro-luxury {
+  color-scheme: dark;
+
+  /* Backgrounds: Deep velvet obsidian onyx */
+  --bg-primary: #06090E;
+  --bg-secondary: #0D121D;
+  --bg-surface: #131926;
+  --bg-surface-elevated: #1A2234;
+  --bg-glass: rgba(19, 25, 38, 0.88);
+  --bg-glass-heavy: rgba(13, 18, 29, 0.96);
+  --bg-glass-card: rgba(19, 25, 38, 0.82);
+
+  /* Typography */
+  --text-primary: #FFFDF8;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-inverse: #06090E;
+  --btn-primary-text: #06090E;
+
+  /* Borders: Elegant gold & subtle white boundaries */
+  --border-subtle: rgba(245, 158, 11, 0.22);
+  --border-glass: rgba(245, 158, 11, 0.16);
+  --border-hover: rgba(245, 158, 11, 0.65);
+  --border-active: #F59E0B;
+  --border-gold: rgba(245, 158, 11, 0.45);
+
+  /* Primary Accent: 24K Royal Gold */
+  --accent-gold: #F59E0B;
+  --accent-gold-hover: #D97706;
+  --accent-gold-gradient: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #B45309 100%);
+  --accent-crimson-gradient: linear-gradient(135deg, #FB7185 0%, #E11D48 50%, #BE123C 100%);
+  --accent-emerald-gradient: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
+
+  /* Ambient Glows & Shadows */
+  --accent-gold-glow: 0 0 32px rgba(245, 158, 11, 0.28), 0 0 64px rgba(245, 158, 11, 0.1);
+  --accent-crimson-glow: 0 0 25px rgba(225, 29, 72, 0.25);
+  --button-ambient-glow: 0 0 28px rgba(245, 158, 11, 0.35), 0 4px 20px rgba(245, 158, 11, 0.45);
+
+  --card-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.8), 0 4px 16px -2px rgba(0, 0, 0, 0.6);
+  --card-hover-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.9), 0 0 32px -4px rgba(245, 158, 11, 0.32);
+  --navbar-shadow: 0 4px 28px rgba(0, 0, 0, 0.75);
+  --badge-bg: rgba(245, 158, 11, 0.2);
+}
+
+/* ==========================================================================
    LIGHT THEME: Clean, Crisp & Appetizing Gourmet Feel
    - Warm creamy gourmet off-whites (#FAF7F2 / #F4EFE6)
    - Pure white card surfaces (#FFFFFF) with warm diffuse shadows

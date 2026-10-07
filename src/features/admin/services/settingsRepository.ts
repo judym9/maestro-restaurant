@@ -1,4 +1,5 @@
 import type { BranchContactInfo, OperatingSchedule, ThemeTokens } from '../types/settings.types';
+import { getOptimalButtonTextColor } from '../utils/themeContrast';
 
 export const SETTINGS_UPDATED_EVENT = 'maestro:admin-settings-updated';
 export const THEME_UPDATED_EVENT = 'maestro:admin-theme-updated';
@@ -8,16 +9,28 @@ const STORAGE_SCHEDULE_KEY = 'maestro_admin_operating_schedule';
 const STORAGE_THEME_KEY = 'maestro_admin_theme_tokens';
 
 export const DEFAULT_CONTACT_INFO: BranchContactInfo = {
-  restaurantNameAr: 'مايسترو النبك',
-  restaurantNameEn: 'Maestro Al-Nabek',
+  restaurantNameAr: 'مطعم مايسترو الملكي',
+  restaurantNameEn: 'El Maestro Royal Restaurant',
+  taglineAr: 'سيمفونية المذاق الأصيل والمشاوي الملكية في النبك',
+  taglineEn: 'The Symphony of Levantine Flavors & Royal Grills in Al-Nabek',
+  aboutStoryAr: 'يقدم مطعم المايسترو منذ تأسيسه تجربة طهي شامية استثنائية تمزج بين عراقة التوابل الدمشقية وجودة المكونات البلدية الطازجة، ليكون وجهتكم الأولى للشاورما والبروستد والمشاوي الفاخرة.',
+  aboutStoryEn: 'Since our establishment, El Maestro has delivered an exceptional Syrian culinary voyage, blending heritage Levantine spices with farm-fresh meats to be your premiere destination for shawarma, crispy broasted, and royal grills.',
+  logoUrl: '',
+  coverBannerUrl: '',
   phonePrimary: '0969 697 587',
-  phoneSecondary: '011 722 0000',
+  phoneSecondary: '011 724 7721',
   whatsappNumber: '963969697587',
-  addressAr: 'شارع الأمين، النبك، ريف دمشق، سوريا',
-  addressEn: 'Amin Street, Al-Nabek, Rural Damascus, Syria',
+  emailContact: 'info@maestro-restaurant.com',
+  addressAr: 'شارع الأمين، ساحة الميدان، النبك، ريف دمشق، سوريا',
+  addressEn: 'Amin Street, Al-Midan Square, Al-Nabek, Rural Damascus, Syria',
   googleMapsUrl: 'https://maps.google.com/?q=Amin+Street,+Al-Nabek,+Syria',
   workingHoursAr: 'يومياً: 12:00 ظهراً - 02:00 بعد منتصف الليل',
   workingHoursEn: 'Daily: 12:00 PM - 02:00 AM',
+  cityAr: 'النبك',
+  cityEn: 'Al-Nabek',
+  instagramUrl: 'https://instagram.com/maestro.restaurant',
+  facebookUrl: 'https://facebook.com/maestro.alnabek',
+  tiktokUrl: 'https://tiktok.com/@maestro_syria',
 };
 
 export const DEFAULT_WEEKLY_SCHEDULE = [
@@ -33,6 +46,7 @@ export const DEFAULT_WEEKLY_SCHEDULE = [
 export const DEFAULT_OPERATING_SCHEDULE: OperatingSchedule = {
   isOpen: true,
   autoToggle: false,
+  is24HourFormat: false,
   openingTime: '12:00',
   closingTime: '02:00',
   emergencyNoticeAr: 'نستقبلكم بكل حب وسرور يومياً في فرعنا بالنبك وخدمة التوصيل السريع متاحة!',
@@ -41,18 +55,27 @@ export const DEFAULT_OPERATING_SCHEDULE: OperatingSchedule = {
   weeklySchedule: DEFAULT_WEEKLY_SCHEDULE,
   minOrderAmount: 50000,
   deliveryFee: 15000,
+  taxRatePercent: 0,
   estimatedDeliveryTimeAr: '30 - 45 دقيقة',
   estimatedDeliveryTimeEn: '30 - 45 mins',
 };
 
 export const DEFAULT_THEME_TOKENS: ThemeTokens = {
-  primaryAccent: '#D97706', // Customer light theme accent gold
-  darkBg: '#0B0F17', // Customer dark mode bg
-  darkSurface: '#1A1D24', // Customer dark mode surface
-  darkBorder: 'rgba(255, 255, 255, 0.1)',
-  lightBg: '#FAF7F2', // Customer light mode bg-primary
-  lightSurface: '#FFFFFF', // Customer light mode card surface
-  lightBorder: 'rgba(226, 232, 240, 0.8)', // Customer light mode subtle border
+  presetId: 'mastro-luxury',
+  primaryAccent: '#F59E0B', // Mastro Luxury Gold
+  secondaryAccent: '#D97706',
+  darkBg: '#06090E', // Deep obsidian/black
+  darkSurface: '#131926', // Luminous dark card surface
+  darkBorder: 'rgba(245, 158, 11, 0.22)',
+  lightBg: '#FAF8F5', // Soft warm white/beige
+  lightSurface: '#FFFFFF',
+  lightBorder: 'rgba(226, 232, 240, 0.8)',
+  textPrimary: '#FFFDF8',
+  darkText: '#FFFDF8',
+  lightText: '#0F172A',
+  fontFamily: 'Cairo',
+  successColor: '#10B981',
+  dangerColor: '#F43F5E',
 };
 
 export interface ISettingsRepository {
@@ -170,12 +193,16 @@ class LocalStorageSettingsRepository implements ISettingsRepository {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
 
-    if (tokens.primaryAccent) {
-      root.style.setProperty('--color-primary', tokens.primaryAccent);
-      root.style.setProperty('--gold-500', tokens.primaryAccent);
-      root.style.setProperty('--primary', tokens.primaryAccent);
-      root.style.setProperty('--accent-gold', tokens.primaryAccent);
-    }
+    const accent = tokens.primaryAccent || '#F59E0B';
+    const btnTextColor = getOptimalButtonTextColor(accent);
+
+    root.style.setProperty('--color-primary', accent);
+    root.style.setProperty('--gold-500', accent);
+    root.style.setProperty('--primary', accent);
+    root.style.setProperty('--accent-gold', accent);
+    root.style.setProperty('--brand-accent', accent);
+    root.style.setProperty('--btn-primary-text', btnTextColor);
+
     if (tokens.secondaryAccent) {
       root.style.setProperty('--color-secondary', tokens.secondaryAccent);
     }
@@ -196,34 +223,54 @@ class LocalStorageSettingsRepository implements ISettingsRepository {
       document.head.appendChild(dynamicStyle);
     }
 
+    const lightBg = tokens.lightBg || '#FAF8F5';
+    const lightSurface = tokens.lightSurface || '#FFFFFF';
+    const lightBorder = tokens.lightBorder || 'rgba(226, 232, 240, 0.8)';
+    const lightText = tokens.lightText || '#0F172A';
+
+    const darkBg = tokens.darkBg || '#06090E';
+    const darkSurface = tokens.darkSurface || '#131926';
+    const darkBorder = tokens.darkBorder || 'rgba(245, 158, 11, 0.22)';
+    const darkText = tokens.darkText || tokens.textPrimary || '#FFFDF8';
+
     dynamicStyle.textContent = `
       :root, [data-theme='light'], html.light {
-        --background: ${tokens.lightBg || '#FAF7F2'};
-        --bg-page: ${tokens.lightBg || '#FAF7F2'};
-        --card: ${tokens.lightSurface || '#FFFFFF'};
-        --bg-surface: ${tokens.lightSurface || '#FFFFFF'};
-        --border: ${tokens.lightBorder || 'rgba(226, 232, 240, 0.8)'};
-        --color-bg: ${tokens.lightBg || '#FAF7F2'};
-        --color-card: ${tokens.lightSurface || '#FFFFFF'};
-        --border-color: ${tokens.lightBorder || 'rgba(226, 232, 240, 0.8)'};
-        --text-primary: #0F172A;
-        --text-secondary: #334155;
-        --text-muted: #64748B;
-        --primary: ${tokens.primaryAccent || '#D97706'};
+        --background: ${lightBg};
+        --bg-page: ${lightBg};
+        --bg-primary: ${lightBg};
+        --card: ${lightSurface};
+        --bg-surface: ${lightSurface};
+        --border: ${lightBorder};
+        --border-color: ${lightBorder};
+        --border-subtle: ${lightBorder};
+        --color-bg: ${lightBg};
+        --color-card: ${lightSurface};
+        --text-primary: ${lightText};
+        --text-main: ${lightText};
+        --foreground: ${lightText};
+        --primary: ${accent};
+        --brand-accent: ${accent};
+        --accent-gold: ${accent};
+        --btn-primary-text: ${btnTextColor};
       }
-      .dark, [data-theme='dark'], html.dark {
-        --background: ${tokens.darkBg || '#0B0F17'};
-        --bg-page: ${tokens.darkBg || '#0B0F17'};
-        --card: ${tokens.darkSurface || '#1A1D24'};
-        --bg-surface: ${tokens.darkSurface || '#1A1D24'};
-        --border: ${tokens.darkBorder || 'rgba(255, 255, 255, 0.1)'};
-        --color-bg: ${tokens.darkBg || '#0B0F17'};
-        --color-card: ${tokens.darkSurface || '#1A1D24'};
-        --border-color: ${tokens.darkBorder || 'rgba(255, 255, 255, 0.1)'};
-        --text-primary: #F9FAFB;
-        --text-secondary: #CBD5E1;
-        --text-muted: #9CA3AF;
-        --primary: ${tokens.primaryAccent || '#F59E0B'};
+      .dark, [data-theme='dark'], html.dark, [data-theme='mastro-luxury'], html.mastro-luxury {
+        --background: ${darkBg};
+        --bg-page: ${darkBg};
+        --bg-primary: ${darkBg};
+        --card: ${darkSurface};
+        --bg-surface: ${darkSurface};
+        --border: ${darkBorder};
+        --border-color: ${darkBorder};
+        --border-subtle: ${darkBorder};
+        --color-bg: ${darkBg};
+        --color-card: ${darkSurface};
+        --text-primary: ${darkText};
+        --text-main: ${darkText};
+        --foreground: ${darkText};
+        --primary: ${accent};
+        --brand-accent: ${accent};
+        --accent-gold: ${accent};
+        --btn-primary-text: ${btnTextColor};
       }
     `;
   }

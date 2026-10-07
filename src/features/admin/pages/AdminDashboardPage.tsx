@@ -1,694 +1,569 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   UtensilsCrossed,
-  Tag,
-  Clock,
   Sparkles,
-  Phone,
-  MessageCircle,
-  MapPin,
-  TrendingUp,
+  Tag,
+  ChefHat,
   Plus,
+  Clock,
+  Phone,
+  Store,
   ChevronRight,
   ChevronLeft,
-  Power,
+  Flame,
+  SlidersHorizontal,
+  Palette,
+  Edit3,
+  Trash2,
   CheckCircle2,
-  Layers,
-  AlertCircle,
+  XCircle,
 } from 'lucide-react';
-import { Modal } from '../components/common/Modal';
-import { AdminMenuProvider, useAdminMenuContext } from '../context/AdminMenuContext';
-import { AdminSettingsProvider, useAdminSettingsContext } from '../context/AdminSettingsContext';
-import { AdminThemeProvider } from '../context/AdminThemeContext';
-import { AdminDataProvider, useAdminData } from '../context/AdminDataContext';
-import { AdminLayout } from '../components/layout/AdminLayout';
-import type { AdminNavTab } from '../components/layout/AdminSidebar';
-import { AdminMenuPage } from './AdminMenuPage';
-import { AdminSettingsPage } from './AdminSettingsPage';
-import { usePromotions } from '../hooks/usePromotions';
-import { PromoCard } from '../components/promotions/PromoCard';
-import { PromoFormModal } from '../components/promotions/PromoFormModal';
-import { PromoPagination } from '../components/promotions/PromoPagination';
-import { useThemeCustomizer } from '../hooks/useThemeCustomizer';
-import { ColorTokenPicker } from '../components/theme/ColorTokenPicker';
-import { ThemeCardPreview } from '../components/theme/ThemeCardPreview';
 import { useLanguage } from '../../../app/providers/LanguageProvider';
-import { MealAssets } from '../../../utils/imageRegistry';
-import type { AdminPromoDeal, PromoFormData } from '../types/promotions.types';
-import { KpiMetricCard, KpiMetricCardSkeleton } from '../components/dashboard/KpiMetricCard';
+import { useAdminData } from '../context/AdminDataContext';
+import { useAdminToast } from '../context/AdminToastContext';
+import { MetricCard } from '../components/common/MetricCard';
+import { MealFormModal } from '../components/menu/MealFormModal';
+import { ConfirmModal } from '../components/common/ConfirmModal';
+import { getMealImage } from '../../../utils/imageRegistry';
+import type { AdminMealItem, MealFormData } from '../types/menu.types';
 
-/**
- * Inner Dashboard Component that has access to all admin contexts
- */
-const AdminDashboardInner: React.FC = () => {
+export const AdminDashboardPage: React.FC = () => {
   const { language, isRtl } = useLanguage();
-  const isAr = language === 'ar';
-  const ArrowIcon = isRtl ? ChevronLeft : ChevronRight;
+  const navigate = useNavigate();
+  const { showToast } = useAdminToast();
 
-  const [activeTab, setActiveTab] = useState<AdminNavTab>('dashboard');
-
-  // Menu context
   const {
+    categories,
     dishes,
-    totalDishesCount,
-    availableDishesCount,
-    categoriesCount,
-  } = useAdminMenuContext();
+    promotions,
+    restaurantSettings,
+    toggleKitchenStatus,
+    toggleDishAvailability,
+    saveDish,
+    deleteDish,
+  } = useAdminData();
 
-  // Admin Data context for loading state
-  const { isLoading } = useAdminData();
+  // Modal states for direct meal CRUD operations from Dashboard
+  const [editingMeal, setEditingMeal] = useState<AdminMealItem | null>(null);
+  const [isMealModalOpen, setIsMealModalOpen] = useState(false);
+  const [deletingMeal, setDeletingMeal] = useState<AdminMealItem | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Settings context
-  const {
-    contactInfo,
-    operatingSchedule,
-    toggleOpenStatus,
-  } = useAdminSettingsContext();
+  // Telemetry KPIs
+  const totalDishes = dishes.length;
+  const availableDishes = dishes.filter((d) => d.isAvailable).length;
+  const activePromos = promotions.filter((p) => p.isActive).length;
+  const isKitchenOpen = restaurantSettings.isKitchenOpen;
 
-  // Promotions Hook
-  const {
-    promos,
-    paginatedPromos,
-    currentPage,
-    totalPages,
-    goToPage,
-    nextPage,
-    prevPage,
-    editingPromo,
-    isModalOpen: isPromoModalOpen,
-    deleteConfirmId: promoDeleteConfirmId,
-    setDeleteConfirmId: setPromoDeleteConfirmId,
-    openNewPromoModal,
-    openEditPromoModal,
-    closeModal: closePromoModal,
-    savePromo,
-    deletePromo,
-    togglePromoActive,
-  } = usePromotions(6);
+  // Master Kitchen Toggle Handler
+  const handleToggleKitchen = async () => {
+    const updated = await toggleKitchenStatus(!isKitchenOpen);
+    showToast(
+      'info',
+      updated.isKitchenOpen
+        ? language === 'ar'
+          ? 'المطبخ يستقبل طلبات الزبائن الآن (نشط)'
+          : 'Kitchen opened for orders (Active)'
+        : language === 'ar'
+        ? 'تم إيقاف استقبال الطلبات في المطبخ مؤقتاً (مغلق)'
+        : 'Kitchen paused temporarily (Closed)'
+    );
+  };
 
-  // Theme Customizer Hook
-  const {
-    activeDraft,
-    handleTokenChange,
-    applyPreset,
-    saveTokens,
-    resetToDefault,
-    saveSuccess,
-  } = useThemeCustomizer();
-
-  const handleOpenPromoModal = (deal?: AdminPromoDeal) => {
-    if (deal) {
-      openEditPromoModal(deal);
-    } else {
-      openNewPromoModal();
+  // Safe meal save handler
+  const handleSaveMeal = async (formData: MealFormData) => {
+    try {
+      await saveDish(formData);
+      showToast(
+        'success',
+        formData.id
+          ? language === 'ar'
+            ? 'تم تحديث بيانات الوجبة بنجاح'
+            : 'Dish updated successfully'
+          : language === 'ar'
+          ? 'تمت إضافة الوجبة الجديدة إلى القائمة'
+          : 'New dish added to catalog'
+      );
+      setIsMealModalOpen(false);
+      setEditingMeal(null);
+    } catch {
+      showToast(
+        'error',
+        language === 'ar' ? 'فشل حفظ الوجبة، يرجى المحاولة ثانية' : 'Failed to save dish'
+      );
     }
   };
 
-  const handleSavePromo = (data: PromoFormData) => {
-    savePromo(data);
+  // Safe meal delete handler
+  const handleConfirmDeleteMeal = async () => {
+    if (!deletingMeal) return;
+    try {
+      await deleteDish(deletingMeal.id);
+      showToast(
+        'success',
+        language === 'ar' ? 'تم حذف الوجبة من القائمة' : 'Dish removed successfully'
+      );
+      setIsDeleteModalOpen(false);
+      setDeletingMeal(null);
+    } catch {
+      showToast(
+        'error',
+        language === 'ar' ? 'تعذر حذف الوجبة حالياً' : 'Failed to delete dish'
+      );
+    }
   };
 
-  const signatureDishes = dishes.filter((d) => d.isSignature || d.isBestseller).slice(0, 4);
+  // Guaranteed non-empty signature & bestseller dishes list
+  const signatureDishes = useMemo(() => {
+    const filtered = dishes.filter((d) => d.isSignature || d.isBestseller);
+    if (filtered.length > 0) return filtered.slice(0, 8);
+    return dishes.slice(0, 8);
+  }, [dishes]);
+
+  // Helper to resolve dish image src
+  const resolveImage = (key: string) => {
+    if (key.startsWith('http') || key.startsWith('data:')) return key;
+    return getMealImage(key).src;
+  };
 
   return (
-    <AdminLayout
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      onQuickAddMeal={activeTab === 'menu' ? undefined : () => setActiveTab('menu')}
-    >
-      {/* Tab: Dashboard Overview */}
-      {activeTab === 'dashboard' && (
-        <div className="w-full max-w-7xl mx-auto pb-12 flex flex-col gap-y-6 sm:gap-y-8 min-w-0">
-          {/* Top KPI Stat Cards (الصف العلوي: مؤشرات سريعة) */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 w-full min-w-0">
-              <KpiMetricCardSkeleton />
-              <KpiMetricCardSkeleton />
-              <KpiMetricCardSkeleton />
-              <KpiMetricCardSkeleton />
+    <div className="flex flex-col gap-6 sm:gap-8 w-full animate-fade-in" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* ========================================================
+          1. HEADER & LIVE OPERATIONAL STATUS ROW
+          ======================================================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+        <div className="text-start">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-[var(--accent-gold)] tracking-wider uppercase">
+              {language === 'ar' ? 'مركز القيادة المباشر' : 'Live Command Center'}
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] mt-1 font-['Cairo',sans-serif]">
+            {language === 'ar' ? 'لوحة القيادة التنفيذية — مطعم مايسترو' : 'Executive Dashboard — El Maestro'}
+          </h1>
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5">
+            {language === 'ar'
+              ? 'متابعة حية للعمليات، الأصناف، العروض الملكية وحالة المطبخ'
+              : 'Real-time telemetry across food catalog, promotions & kitchen operations'}
+          </p>
+        </div>
+
+        {/* Master Kitchen Switch & Clickable Badge */}
+        <div className="flex items-center gap-3 p-2.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0 self-start sm:self-auto">
+          <div className="flex flex-col text-start ps-2">
+            <span className="text-xs font-bold text-[var(--text-primary)]">
+              {language === 'ar' ? 'حالة المطبخ' : 'Kitchen Status'}
+            </span>
+            <span className="text-[11px] text-[var(--text-muted)]">
+              {isKitchenOpen
+                ? language === 'ar'
+                  ? 'يستقبل الطلبات'
+                  : 'Taking Orders'
+                : language === 'ar'
+                ? 'متوقف مؤقتاً'
+                : 'Paused'}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleToggleKitchen}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md cursor-pointer ${
+              isKitchenOpen
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/30'
+                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30'
+            }`}
+            title={language === 'ar' ? 'انقر لتغيير حالة المطبخ' : 'Click to toggle kitchen status'}
+          >
+            <ChefHat className="w-4 h-4 shrink-0" />
+            <span>
+              {isKitchenOpen
+                ? language === 'ar'
+                  ? 'مفتوح (تشغيل)'
+                : 'Open (Active)'
+                : language === 'ar'
+                ? 'مغلق (إيقاف)'
+                : 'Closed (Paused)'}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================
+          2. EXECUTIVE KPI TELEMETRY CARDS (Responsive CSS Grid)
+          ======================================================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <MetricCard
+          title={language === 'ar' ? 'أصناف القائمة الملكية' : 'Catalog Meals'}
+          value={totalDishes}
+          subtitle={language === 'ar' ? `${availableDishes} صنف متاح حالياً للطلب` : `${availableDishes} available in stock`}
+          icon={UtensilsCrossed}
+          accentColor="gold"
+          onClick={() => navigate('/admin/menu')}
+        />
+
+        <MetricCard
+          title={language === 'ar' ? 'فئات الطعام النشطة' : 'Active Categories'}
+          value={categories.length}
+          subtitle={language === 'ar' ? 'تصنيفات منظمة للطلب' : 'Organized food sections'}
+          icon={Sparkles}
+          accentColor="blue"
+          onClick={() => navigate('/admin/menu')}
+        />
+
+        <MetricCard
+          title={language === 'ar' ? 'العروض الملكية النشطة' : 'Active Promotions'}
+          value={activePromos}
+          subtitle={language === 'ar' ? `${promotions.length} باقة مسجلة بالكامل` : `${promotions.length} total packages`}
+          icon={Tag}
+          accentColor="emerald"
+          onClick={() => navigate('/admin/promotions')}
+        />
+
+        <MetricCard
+          title={language === 'ar' ? 'سرعة التوصيل المتوقعة' : 'Delivery Speed'}
+          value={restaurantSettings.deliveryTimeAr || '30 - 45 دقيقة'}
+          subtitle={language === 'ar' ? 'النبك ومحيطها' : 'Al-Nabek & surrounds'}
+          icon={Clock}
+          accentColor="crimson"
+          onClick={() => navigate('/admin/settings')}
+        />
+      </div>
+
+      {/* ========================================================
+          3. QUICK ACTIONS & DIRECT NAVIGATIONAL COMMAND BAR
+          ======================================================== */}
+      <div className="p-4 sm:p-5 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col gap-3 w-full">
+        <div className="flex items-center gap-2 pb-2 border-b border-[var(--border-subtle)] text-start">
+          <Sparkles className="w-4 h-4 text-[var(--accent-gold)] shrink-0" />
+          <h2 className="text-xs font-bold text-[var(--text-muted)] tracking-wider uppercase">
+            {language === 'ar' ? 'إجراءات سريعة واختصارات فورية' : 'Quick Operational Actions'}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 w-full">
+          {/* Quick Action 1: Menu Management */}
+          <Link
+            to="/admin/menu"
+            className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 text-[var(--text-primary)] transition-all group text-start no-underline min-w-0 overflow-hidden"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] shrink-0 group-hover:scale-105 transition-transform">
+              <Plus className="w-5 h-5 stroke-[2.5]" />
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 w-full min-w-0">
-              {/* Stat 1: Total Dishes (إجمالي الأطباق) */}
-              <KpiMetricCard
-                label={isAr ? 'إجمالي الأطباق' : 'Total Dishes'}
-                value={totalDishesCount}
-                icon={UtensilsCrossed}
-                iconColorVariant="amber"
-                badge={{
-                  text: isAr ? `${availableDishesCount} متاح للطلب` : `${availableDishesCount} available`,
-                  variant: 'emerald',
-                  icon: <CheckCircle2 size={12} />,
-                }}
-                onClick={() => setActiveTab('menu')}
-                tooltip={isAr ? 'انقر لإدارة الأطباق في القائمة' : 'Click to manage menu dishes'}
-              />
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold truncate">
+                {language === 'ar' ? 'إدارة الوجبات' : 'Manage Dishes'}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] truncate">
+                {language === 'ar' ? 'إضافة وتعديل الأصناف' : 'Add & edit meals'}
+              </span>
+            </div>
+          </Link>
 
-              {/* Stat 2: Categories Count (أقسام القائمة) */}
-              <KpiMetricCard
-                label={isAr ? 'أقسام القائمة' : 'Menu Sections'}
-                value={categoriesCount}
-                icon={TrendingUp}
-                iconColorVariant="blue"
-                badge={{
-                  text: isAr ? 'تصنيفات رئيسية نشطة' : 'Active food categories',
-                  variant: 'blue',
-                  icon: <Layers size={12} />,
-                }}
-                onClick={() => setActiveTab('menu')}
-                tooltip={isAr ? 'انقر لعرض وتعديل أقسام القائمة' : 'Click to view menu categories'}
-              />
+          {/* Quick Action 2: Royal Promotions */}
+          <Link
+            to="/admin/promotions"
+            className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:border-emerald-500 hover:bg-emerald-500/10 text-[var(--text-primary)] transition-all group text-start no-underline min-w-0 overflow-hidden"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+              <Tag className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold truncate">
+                {language === 'ar' ? 'العروض الملكية' : 'Promotions'}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] truncate">
+                {language === 'ar' ? 'إطلاق حزم توفير' : 'Launch deals'}
+              </span>
+            </div>
+          </Link>
 
-              {/* Stat 3: Active Promos (العروض النشطة) */}
-              <KpiMetricCard
-                label={isAr ? 'العروض النشطة' : 'Active Promotions'}
-                value={promos.filter((p) => p.isActive).length}
-                icon={Tag}
-                iconColorVariant="emerald"
-                badge={{
-                  text: isAr
-                    ? `${promos.filter((p) => p.isActive).length} عروض نشطة`
-                    : `${promos.filter((p) => p.isActive).length} active deals`,
-                  variant: promos.filter((p) => p.isActive).length > 0 ? 'emerald' : 'muted',
-                  icon: <Sparkles size={12} />,
-                }}
-                onClick={() => setActiveTab('promotions')}
-                tooltip={isAr ? 'انقر لإدارة العروض الترويجية' : 'Click to manage promotions'}
-              />
+          {/* Quick Action 3: Working Hours & Branch Settings */}
+          <Link
+            to="/admin/settings"
+            className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:border-sky-500 hover:bg-sky-500/10 text-[var(--text-primary)] transition-all group text-start no-underline min-w-0 overflow-hidden"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-500/15 text-sky-400 shrink-0 group-hover:scale-105 transition-transform">
+              <SlidersHorizontal className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold truncate">
+                {language === 'ar' ? 'ساعات العمل' : 'Working Hours'}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] truncate">
+                {language === 'ar' ? 'الجدول الأسبوعي' : 'Weekly schedule'}
+              </span>
+            </div>
+          </Link>
 
-              {/* Stat 4: Restaurant Operating Status (استقبال الطلبات) */}
-              <KpiMetricCard
-                label={isAr ? 'استقبال الطلبات' : 'Kitchen Status'}
-                icon={Clock}
-                iconColorVariant={operatingSchedule.isOpen ? 'emerald' : 'rose'}
-                value={
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                        operatingSchedule.isOpen
-                          ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse'
-                          : 'bg-rose-500 shadow-sm shadow-rose-500/50'
-                      }`}
-                    />
-                    <span
-                      className={`text-2xl sm:text-3xl font-black tracking-tight leading-none ${
-                        operatingSchedule.isOpen ? 'text-emerald-500' : 'text-rose-500'
-                      }`}
-                    >
-                      {operatingSchedule.isOpen ? (isAr ? 'مفتوح للزبائن' : 'OPEN') : (isAr ? 'مغلق حالياً' : 'CLOSED')}
-                    </span>
+          {/* Quick Action 4: Visual Theme Customizer */}
+          <Link
+            to="/admin/theme"
+            className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] hover:border-purple-500 hover:bg-purple-500/10 text-[var(--text-primary)] transition-all group text-start no-underline min-w-0 overflow-hidden"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-500/15 text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
+              <Palette className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold truncate">
+                {language === 'ar' ? 'تخصيص الهوية' : 'Theme Colors'}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] truncate">
+                {language === 'ar' ? 'محرر الألوان المباشر' : 'Visual customizer'}
+              </span>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* ========================================================
+          4. TWO-COLUMN OPERATIONAL LAYOUT:
+             - LEFT (Col 7): Signature Dishes Roster with Quick CRUD
+             - RIGHT (Col 5): Branch Profile & Settings Overview
+          ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start w-full">
+        {/* Left Column: Signature & Bestseller Roster with Instant Actions */}
+        <div className="lg:col-span-7 flex flex-col gap-4 w-full">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2 text-start">
+              <Flame className="w-5 h-5 text-[var(--accent-gold)] shrink-0" />
+              <h2 className="text-base font-bold text-[var(--text-primary)]">
+                {language === 'ar' ? 'الوجبات التوقيعية والأكثر طلباً' : 'Signature & Bestseller Roster'}
+              </h2>
+            </div>
+
+            <Link
+              to="/admin/menu"
+              className="text-xs font-bold text-[var(--accent-gold)] hover:underline flex items-center gap-1 no-underline"
+            >
+              <span>{language === 'ar' ? 'عرض الكل' : 'View all'}</span>
+              {isRtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full">
+            {signatureDishes.map((dish) => {
+              const imageSrc = resolveImage(dish.imageKey);
+              const matchedCategory = categories.find((c) => c.id === dish.categoryId);
+
+              return (
+                <div
+                  key={dish.id}
+                  className={`
+                    flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl
+                    border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--border-hover)]
+                    transition-all gap-3 w-full
+                    ${!dish.isAvailable ? 'opacity-70 grayscale-[30%]' : ''}
+                  `}
+                >
+                  {/* Dish Info & Thumbnail */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1 text-start">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)]">
+                      <img
+                        src={imageSrc}
+                        alt={language === 'ar' ? dish.nameAr : dish.nameEn}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-[var(--text-primary)] truncate font-['Cairo',sans-serif]">
+                          {language === 'ar' ? dish.nameAr : dish.nameEn}
+                        </span>
+                        {dish.isSignature && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
+                            {language === 'ar' ? 'توقيع الشيف' : "Chef's"}
+                          </span>
+                        )}
+                        {dish.isBestseller && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-400">
+                            {language === 'ar' ? 'الأكثر طلباً' : 'Bestseller'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-[var(--accent-gold)] font-mono font-bold">
+                          {dish.price.toLocaleString('ar-SY')} {language === 'ar' ? 'ل.س' : 'SP'}
+                        </span>
+                        {matchedCategory && (
+                          <span className="text-[11px] text-[var(--text-muted)] truncate">
+                            • {language === 'ar' ? matchedCategory.nameAr : matchedCategory.nameEn}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                }
-                actionNode={
-                  <div className="w-full flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-                      {operatingSchedule.isOpen
-                        ? (isAr ? 'يستقبل الطلبات الآن' : 'Accepting orders')
-                        : (isAr ? 'الطلبات متوقفة مؤقتاً' : 'Orders paused')}
-                    </span>
+
+                  {/* Actions: Direct Availability Switch + Edit + Delete */}
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                    {/* Instant Availability Toggle */}
                     <button
                       type="button"
-                      onClick={toggleOpenStatus}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
-                        operatingSchedule.isOpen
-                          ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                      onClick={async () => {
+                        await toggleDishAvailability(dish.id, !dish.isAvailable);
+                        showToast(
+                          'info',
+                          !dish.isAvailable
+                            ? language === 'ar'
+                              ? `تم إتاحة وجبة "${dish.nameAr}" للطلب`
+                              : `Marked "${dish.nameEn}" as available`
+                            : language === 'ar'
+                            ? `تم إيقاف وجبة "${dish.nameAr}" مؤقتاً`
+                            : `Marked "${dish.nameEn}" as out of stock`
+                        );
+                      }}
+                      className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
+                        dish.isAvailable
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25'
+                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/25 hover:bg-rose-500/25'
                       }`}
-                      title={
-                        operatingSchedule.isOpen
-                          ? (isAr ? 'إغلاق استقبال الطلبات' : 'Close kitchen')
-                          : (isAr ? 'فتح استقبال الطلبات' : 'Open kitchen')
-                      }
+                      title={language === 'ar' ? 'تغيير حالة التوفر' : 'Toggle availability'}
                     >
-                      <Power size={13} className="shrink-0" />
-                      <span>
-                        {operatingSchedule.isOpen
-                          ? (isAr ? 'التبديل إلى مغلق' : 'Switch to closed')
-                          : (isAr ? 'التبديل إلى مفتوح' : 'Switch to open')}
-                      </span>
+                      {dish.isAvailable ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{language === 'ar' ? 'متاح' : 'In Stock'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>{language === 'ar' ? 'معطل' : 'Out of Stock'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Quick Edit Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMeal(dish);
+                        setIsMealModalOpen(true);
+                      }}
+                      className="p-1.5 rounded-xl border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 transition-colors cursor-pointer"
+                      title={language === 'ar' ? 'تعديل بيانات الوجبة' : 'Edit meal'}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
+                    {/* Quick Delete Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeletingMeal(dish);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="p-1.5 rounded-xl border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-rose-400 hover:border-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title={language === 'ar' ? 'حذف الوجبة من القائمة' : 'Delete meal'}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                }
-              />
-            </div>
-          )}
-
-          {/* Bottom Management & Data Cards (الصف السفلي: كروت الإدارة والبيانات) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 w-full min-w-0 items-stretch">
-            {/* Card 1: Branch Details & Hours (بيانات الفرع) */}
-            <div className="relative bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col justify-between min-w-0 group">
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/40 transition-all duration-300 rounded-t-xl pointer-events-none" />
-
-              {/* Header */}
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-                <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                  <MapPin size={16} />
-                </span>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100 leading-tight">
-                  {isAr ? 'بيانات فرع النبك' : 'Al-Nabek Branch Info'}
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 my-3.5 flex flex-col justify-between gap-2.5 text-xs">
-                {/* Item 1: Address */}
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 min-w-0">
-                  <span className="p-1 rounded-md bg-amber-500/10 text-amber-500 dark:text-amber-400 shrink-0">
-                    <MapPin size={13} />
-                  </span>
-                  <span className="font-medium text-slate-600 dark:text-zinc-300 text-xs truncate" title={isAr ? contactInfo.addressAr : contactInfo.addressEn}>
-                    {isAr ? contactInfo.addressAr : contactInfo.addressEn}
-                  </span>
                 </div>
-
-                {/* Item 2: Phone */}
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 min-w-0">
-                  <span className="p-1 rounded-md bg-sky-500/10 text-sky-500 dark:text-sky-400 shrink-0">
-                    <Phone size={13} />
-                  </span>
-                  <span dir="ltr" className="font-bold text-slate-900 dark:text-zinc-100 text-xs text-start font-numeric truncate">
-                    {contactInfo.phonePrimary}
-                  </span>
-                </div>
-
-                {/* Item 3: WhatsApp */}
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 min-w-0">
-                  <span className="p-1 rounded-md bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 shrink-0">
-                    <MessageCircle size={13} />
-                  </span>
-                  <span dir="ltr" className="font-bold text-slate-900 dark:text-zinc-100 text-xs text-start font-numeric truncate">
-                    +{contactInfo.whatsappNumber}
-                  </span>
-                </div>
-
-                {/* Item 4: Hours */}
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 min-w-0">
-                  <span className="p-1 rounded-md bg-purple-500/10 text-purple-500 dark:text-purple-400 shrink-0">
-                    <Clock size={13} />
-                  </span>
-                  <span className="font-medium text-slate-600 dark:text-zinc-300 text-xs truncate" title={isAr ? contactInfo.workingHoursAr : contactInfo.workingHoursEn}>
-                    {isAr ? contactInfo.workingHoursAr : contactInfo.workingHoursEn}
-                  </span>
-                </div>
-              </div>
-
-              {/* Footer Action */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('settings')}
-                className="w-full flex items-center justify-center gap-2 text-center text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors pt-3 border-t border-slate-100 dark:border-zinc-800/80 mt-auto bg-transparent cursor-pointer group/btn"
-              >
-                <span>{isAr ? 'إدارة بيانات الفرع' : 'Manage Branch Info'}</span>
-                <ArrowIcon size={14} className="text-amber-500 dark:text-amber-400 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Card 2: Menu & Dishes Management (قائمة الوجبات) */}
-            <div className="relative bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col justify-between min-w-0 group">
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/40 transition-all duration-300 rounded-t-xl pointer-events-none" />
-
-              {/* Header */}
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-                <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                  <UtensilsCrossed size={16} />
-                </span>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100 leading-tight">
-                  {isAr ? 'قائمة الطعام والوجبات' : 'Menu & Dishes'}
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 my-3.5 flex flex-col justify-between gap-2.5 text-xs">
-                {/* Category 1: Shawarma */}
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-200 truncate text-xs">
-                    {isAr ? 'الشاورما الشامية' : 'Authentic Shawarma'}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/50 text-[11px] font-bold text-slate-700 dark:text-zinc-300 font-numeric shrink-0 whitespace-nowrap">
-                    {dishes.filter((d) => d.categoryId.includes('shawarma')).length} {isAr ? 'وجبة' : 'items'}
-                  </span>
-                </div>
-
-                {/* Category 2: Broasted */}
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-200 truncate text-xs">
-                    {isAr ? 'الدجاج البروستد' : 'Golden Broasted'}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/50 text-[11px] font-bold text-slate-700 dark:text-zinc-300 font-numeric shrink-0 whitespace-nowrap">
-                    {dishes.filter((d) => d.categoryId.includes('broasted')).length} {isAr ? 'وجبة' : 'items'}
-                  </span>
-                </div>
-
-                {/* Category 3: Towers */}
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-200 truncate text-xs">
-                    {isAr ? 'أبراج مايسترو' : 'Shawarma Towers'}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/50 text-[11px] font-bold text-slate-700 dark:text-zinc-300 font-numeric shrink-0 whitespace-nowrap">
-                    {dishes.filter((d) => d.categoryId.includes('tower')).length} {isAr ? 'صنف' : 'items'}
-                  </span>
-                </div>
-
-                {/* Category 4: Sides */}
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-200 truncate text-xs">
-                    {isAr ? 'المقبلات والإضافات' : 'Appetizers & Drinks'}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700/50 text-[11px] font-bold text-slate-700 dark:text-zinc-300 font-numeric shrink-0 whitespace-nowrap">
-                    {dishes.filter((d) => !d.categoryId.includes('shawarma') && !d.categoryId.includes('broasted') && !d.categoryId.includes('tower')).length} {isAr ? 'أصناف' : 'items'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Footer Action */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('menu')}
-                className="w-full flex items-center justify-center gap-2 text-center text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors pt-3 border-t border-slate-100 dark:border-zinc-800/80 mt-auto bg-transparent cursor-pointer group/btn"
-              >
-                <span>{isAr ? 'إدارة الوجبات والأسعار' : 'Open Menu & Dish Manager'}</span>
-                <ArrowIcon size={14} className="text-amber-500 dark:text-amber-400 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Card 3: Promotions & Royal Deals (العروض والكيانات) */}
-            <div className="relative bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col justify-between min-w-0 group">
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/40 transition-all duration-300 rounded-t-xl pointer-events-none" />
-
-              {/* Header */}
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-                <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                  <Tag size={16} />
-                </span>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100 leading-tight">
-                  {isAr ? 'العروض والباقات الملكية' : 'Promotions & Deals'}
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 my-3.5 flex flex-col justify-between gap-2.5 text-xs">
-                {promos.slice(0, 2).map((deal) => (
-                  <div
-                    key={deal.id}
-                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 flex flex-col gap-1.5 min-w-0"
-                  >
-                    <div className="flex items-center justify-between gap-2 min-w-0">
-                      <span className="font-bold text-slate-900 dark:text-zinc-100 truncate text-xs">
-                        {isAr ? deal.titleAr : deal.titleEn}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 whitespace-nowrap ${deal.isActive ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/40'}`}>
-                        {deal.isActive ? (isAr ? 'نشط' : 'Active') : (isAr ? 'معطل' : 'Off')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-slate-900 dark:text-zinc-100 font-black text-xs font-numeric">
-                          {deal.price.toLocaleString()} {isAr ? 'ل.س' : 'SYP'}
-                        </span>
-                        <span className="line-through text-muted-foreground text-[10px] font-numeric opacity-60">
-                          {deal.originalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 whitespace-nowrap">
-                        -{deal.discountPercent}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Footer Action */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('promotions')}
-                className="w-full flex items-center justify-center gap-2 text-center text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors pt-3 border-t border-slate-100 dark:border-zinc-800/80 mt-auto bg-transparent cursor-pointer group/btn"
-              >
-                <span>{isAr ? 'إدارة وتفعيل العروض' : 'Manage Royal Deals'}</span>
-                <ArrowIcon size={14} className="text-amber-500 dark:text-amber-400 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Card 4: Maestro Signature Dishes (أطباق مايسترو) */}
-            <div className="relative bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col justify-between min-w-0 group">
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/40 transition-all duration-300 rounded-t-xl pointer-events-none" />
-
-              {/* Header */}
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-                <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                  <Sparkles size={16} />
-                </span>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100 leading-tight">
-                  {isAr ? 'أطباق مايسترو الملكية' : 'Maestro Signature Dishes'}
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 my-3.5 flex flex-col justify-between gap-2 text-xs">
-                {signatureDishes.slice(0, 3).map((dish) => (
-                  <div
-                    key={dish.id}
-                    className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/60 dark:border-zinc-800/80 flex items-center justify-between gap-2.5 min-w-0"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <img
-                        src={MealAssets[dish.imageKey]?.src || MealAssets['shawarma-tower'].src}
-                        alt={isAr ? dish.nameAr : dish.nameEn}
-                        className="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-200/80 dark:border-zinc-700/80"
-                      />
-                      <div className="min-w-0">
-                        <span className="font-bold text-slate-900 dark:text-zinc-100 truncate block text-xs">
-                          {isAr ? dish.nameAr : dish.nameEn}
-                        </span>
-                        <span className="text-[10px] font-semibold text-muted-foreground block font-numeric">
-                          {dish.price.toLocaleString()} {isAr ? 'ل.س' : 'SYP'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 whitespace-nowrap ${
-                        dish.isAvailable
-                          ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                          : 'text-rose-500 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                      }`}
-                    >
-                      {dish.isAvailable ? (isAr ? 'متوفر' : 'Available') : (isAr ? 'معطل' : 'Sold Out')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Footer Action */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('menu')}
-                className="w-full flex items-center justify-center gap-2 text-center text-xs font-bold text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors pt-3 border-t border-slate-100 dark:border-zinc-800/80 mt-auto bg-transparent cursor-pointer group/btn"
-              >
-                <span>{isAr ? 'إدارة الأطباق المميزة' : 'Manage Signature Dishes'}</span>
-                <ArrowIcon size={14} className="text-amber-500 dark:text-amber-400 group-hover/btn:translate-x-1 rtl:group-hover/btn:-translate-x-1 transition-transform" />
-              </button>
-            </div>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {/* Tab: Menu Management */}
-      {activeTab === 'menu' && <AdminMenuPage />}
+        {/* Right Column: Branch Operational Profile & Quick Settings */}
+        <div className="lg:col-span-5 flex flex-col gap-5 p-5 sm:p-6 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] w-full text-start">
+          <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-subtle)]">
+            <Store className="w-5 h-5 text-[var(--accent-gold)] shrink-0" />
+            <h3 className="text-base font-bold text-[var(--text-primary)]">
+              {language === 'ar' ? 'معلومات وبيانات الفرع' : 'Branch Operational Profile'}
+            </h3>
+          </div>
 
-      {/* Tab: Promotions / Royal Bundles (العروض والباقات الملكية) */}
-      {activeTab === 'promotions' && (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 space-y-6 pb-16 min-w-0">
-          {/* Header Action Bar */}
-          <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
-                  <Tag size={20} />
-                </span>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-zinc-100 tracking-tight">
-                  {isAr ? 'العروض والباقات الملكية' : 'Royal Offers & Bundles'}
-                </h2>
-              </div>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-zinc-400">
-                {isAr
-                  ? 'إدارة باقات التوفير الحصرية، خصومات الوجبات العائلية، وتحديد فترات الصلاحية.'
-                  : 'Manage exclusive savings bundles, family deals, and validity periods.'}
-              </p>
+          <div className="flex flex-col gap-3 text-xs w-full">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
+              <span className="text-[var(--text-muted)] flex items-center gap-2">
+                <Store className="w-4 h-4 text-[var(--accent-gold)]" />
+                {language === 'ar' ? 'اسم المطعم:' : 'Restaurant:'}
+              </span>
+              <span className="font-bold text-[var(--text-primary)]">
+                {language === 'ar' ? 'مطعم مايسترو الملكي' : 'El Maestro Royal Restaurant'}
+              </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Micro Stats Counter */}
-              <div className="hidden sm:flex items-center gap-2 text-xs font-semibold">
-                <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 font-numeric">
-                  {promos.length} {isAr ? 'باقة إجمالاً' : 'Total Bundles'}
-                </span>
-                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-numeric">
-                  {promos.filter((p) => p.isActive).length} {isAr ? 'عروض نشطة' : 'Active'}
-                </span>
-              </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
+              <span className="text-[var(--text-muted)] flex items-center gap-2">
+                <Phone className="w-4 h-4 text-emerald-400" />
+                {language === 'ar' ? 'هاتف الطلبات:' : 'Direct Phone:'}
+              </span>
+              <span className="font-bold text-[var(--text-primary)] font-mono" dir="ltr">
+                {restaurantSettings.phone || '0969 697 587'}
+              </span>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => handleOpenPromoModal()}
-                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-4.5 py-2.5 rounded-xl shadow-md shadow-amber-500/20 active:scale-95 transition-all text-xs sm:text-sm cursor-pointer whitespace-nowrap"
-              >
-                <Plus size={17} className="stroke-[3]" />
-                <span>{isAr ? 'إضافة باقة جديدة' : 'Add New Bundle'}</span>
-              </button>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
+              <span className="text-[var(--text-muted)] flex items-center gap-2">
+                <Clock className="w-4 h-4 text-sky-400" />
+                {language === 'ar' ? 'أوقات الدوام:' : 'Operating Hours:'}
+              </span>
+              <span className="font-bold text-[var(--text-primary)]">
+                12:00 PM - 02:00 AM
+              </span>
+            </div>
+
+            <div className="flex items-start justify-between p-3 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
+              <span className="text-[var(--text-muted)] flex items-center gap-2 shrink-0">
+                <Store className="w-4 h-4 text-purple-400" />
+                {language === 'ar' ? 'العنوان:' : 'Address:'}
+              </span>
+              <span className="font-medium text-[var(--text-primary)] text-end ms-4">
+                {language === 'ar'
+                  ? restaurantSettings.addressAr || 'شارع الأمين، ساحة الميدان، النبك'
+                  : restaurantSettings.addressEn || 'Amin Street, Al-Midan Square, Al-Nabek'}
+              </span>
             </div>
           </div>
 
-          {/* Bundles Grid */}
-          {paginatedPromos.length === 0 ? (
-            <div className="py-16 text-center rounded-xl bg-white dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
-              <div className="w-14 h-14 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center mx-auto">
-                <Tag size={28} className="stroke-[1.8]" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-zinc-100">
-                  {isAr ? 'لا توجد عروض ترويجية مسجلة حالياً' : 'No promotional deals registered'}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto leading-relaxed">
-                  {isAr
-                    ? 'أضف باقات ملكية خاصة لتقديم أسعار مميزة وجذب المزيد من الزبائن.'
-                    : 'Add special royal bundles to offer attractive discounts and delight customers.'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleOpenPromoModal()}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm cursor-pointer"
-              >
-                {isAr ? 'إضافة باقة جديدة' : 'Add New Bundle'}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
-              {paginatedPromos.map((deal) => (
-                <PromoCard
-                  key={deal.id}
-                  deal={deal}
-                  onEdit={handleOpenPromoModal}
-                  onDelete={(id) => setPromoDeleteConfirmId(id)}
-                  onToggleActive={togglePromoActive}
-                  language={language}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          <PromoPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onNext={nextPage}
-            onPrev={prevPage}
-            isRtl={isRtl}
-            language={language}
-          />
-
-          {/* Promotion Form Modal */}
-          <PromoFormModal
-            isOpen={isPromoModalOpen}
-            onClose={closePromoModal}
-            onSave={handleSavePromo}
-            initialData={editingPromo}
-            language={language}
-          />
-
-          {/* Delete Promo Confirmation Modal */}
-          <Modal
-            isOpen={Boolean(promoDeleteConfirmId)}
-            onClose={() => setPromoDeleteConfirmId(null)}
-            size="sm"
-            title={isAr ? 'تأكيد حذف الباقة الملكية' : 'Confirm Bundle Deletion'}
+          <Link
+            to="/admin/settings"
+            className="w-full py-2.5 rounded-xl text-xs font-bold border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)] transition-colors text-center no-underline"
           >
-            <div className="space-y-4 text-center py-2">
-              <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 mx-auto flex items-center justify-center">
-                <AlertCircle size={26} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                  {isAr ? 'هل أنت متأكد من حذف هذه الباقة؟' : 'Are you sure you want to delete this bundle?'}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  {isAr
-                    ? 'سيتم حذف الباقة نهائياً ولن يتمكن الزبائن من طلب هذا العرض بعد الآن.'
-                    : 'This offer will be permanently deleted and customers won’t be able to order it.'}
-                </p>
-              </div>
-              <div className="flex items-center justify-center gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setPromoDeleteConfirmId(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer"
-                >
-                  {isAr ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (promoDeleteConfirmId) deletePromo(promoDeleteConfirmId);
-                  }}
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-sm shadow-rose-600/20 active:scale-95 cursor-pointer"
-                >
-                  {isAr ? 'نعم، احذف الباقة' : 'Yes, Delete'}
-                </button>
-              </div>
-            </div>
-          </Modal>
+            {language === 'ar' ? 'تعديل الإعدادات والملف' : 'Configure Profile & Settings'}
+          </Link>
         </div>
-      )}
+      </div>
 
-      {/* Tab: Settings */}
-      {activeTab === 'settings' && <AdminSettingsPage />}
+      {/* ========================================================
+          5. MODALS MOUNTED FOR DIRECT DASHBOARD ACTIONS
+          ======================================================== */}
+      {/* Meal Form Modal */}
+      <MealFormModal
+        isOpen={isMealModalOpen}
+        categories={categories}
+        editingMeal={editingMeal}
+        onClose={() => {
+          setIsMealModalOpen(false);
+          setEditingMeal(null);
+        }}
+        onSave={handleSaveMeal}
+      />
 
-      {/* Tab: Theme Customizer */}
-      {activeTab === 'theme' && (
-        <div className="w-full max-w-7xl mx-auto pb-16 min-w-0">
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
-            {/* Left / Forms Column (7 cols on XL) */}
-            <div className="xl:col-span-7 space-y-6 min-w-0">
-              <ColorTokenPicker
-                tokens={activeDraft}
-                onChangeToken={handleTokenChange}
-                onApplyPreset={applyPreset}
-                onSaveTokens={saveTokens}
-                onResetTokens={resetToDefault}
-                saveSuccess={saveSuccess}
-                language={language}
-              />
-            </div>
-
-            {/* Right / Sticky Live Preview Column (5 cols on XL) */}
-            <div className="xl:col-span-5 min-w-0 xl:sticky xl:top-6">
-              <ThemeCardPreview
-                tokens={activeDraft}
-                language={language}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </AdminLayout>
-  );
-};
-
-/**
- * Root Admin Dashboard Page with Provider Wrapping
- */
-export const AdminDashboardPage: React.FC = () => {
-  return (
-    <AdminDataProvider>
-      <AdminThemeProvider>
-        <AdminSettingsProvider>
-          <AdminMenuProvider>
-            <AdminDashboardInner />
-          </AdminMenuProvider>
-        </AdminSettingsProvider>
-      </AdminThemeProvider>
-    </AdminDataProvider>
+      {/* Meal Deletion Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        titleAr="تأكيد حذف الوجبة"
+        titleEn="Confirm Meal Deletion"
+        messageAr={`هل أنت متأكد من رغبتك في حذف "${deletingMeal?.nameAr || ''}" نهائياً من قائمة الطعام؟`}
+        messageEn={`Are you sure you want to permanently delete "${deletingMeal?.nameEn || ''}"?`}
+        confirmLabelAr="حذف الوجبة"
+        confirmLabelEn="Delete Meal"
+        cancelLabelAr="إلغاء"
+        cancelLabelEn="Cancel"
+        onConfirm={handleConfirmDeleteMeal}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setDeletingMeal(null);
+        }}
+        isDestructive
+      />
+    </div>
   );
 };
 

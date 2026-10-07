@@ -15,10 +15,20 @@ import { Footer } from '../features/navigation/Footer';
 import { FloatingWhatsApp } from '../common/components/FloatingWhatsApp/FloatingWhatsApp';
 
 import {
-  AdminDashboardPage,
+  AdminLayout,
   AdminLoginPage,
   AdminRouteGuard,
   AdminAuthProvider,
+  AdminDataProvider,
+  AdminMenuProvider,
+  AdminSettingsProvider,
+  AdminThemeProvider,
+  AdminToastProvider,
+  AdminDashboardPage,
+  AdminMenuPage,
+  AdminPromotionsPage,
+  AdminSettingsPage,
+  AdminThemePage,
 } from '../features/admin';
 
 /**
@@ -53,26 +63,43 @@ export const App: React.FC = () => {
           <LanguageProvider>
             <CartProvider>
               <AdminAuthProvider>
-                <Routes>
-                  {/* Public Customer Storefront */}
-                  <Route path="/" element={<StorefrontPage />} />
+                <AdminDataProvider>
+                  <AdminMenuProvider>
+                    <AdminSettingsProvider>
+                      <AdminThemeProvider>
+                        <AdminToastProvider>
+                          <Routes>
+                            {/* Public Customer Storefront */}
+                            <Route path="/" element={<StorefrontPage />} />
 
-                  {/* Admin Authentication Login Page */}
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
+                            {/* Admin Authentication Login Page */}
+                            <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                  {/* Protected Executive Administration Platform */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRouteGuard>
-                        <AdminDashboardPage />
-                      </AdminRouteGuard>
-                    }
-                  />
+                            {/* Protected Executive Administration Platform with AdminLayout */}
+                            <Route
+                              path="/admin"
+                              element={
+                                <AdminRouteGuard>
+                                  <AdminLayout />
+                                </AdminRouteGuard>
+                              }
+                            >
+                              <Route index element={<AdminDashboardPage />} />
+                              <Route path="menu" element={<AdminMenuPage />} />
+                              <Route path="promotions" element={<AdminPromotionsPage />} />
+                              <Route path="settings" element={<AdminSettingsPage />} />
+                              <Route path="theme" element={<AdminThemePage />} />
+                              <Route path="*" element={<Navigate to="/admin" replace />} />
+                            </Route>
 
-                  {/* Fallback redirect to storefront */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                            {/* Fallback redirect to storefront */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                          </Routes>
+                        </AdminToastProvider>
+                      </AdminThemeProvider>
+                    </AdminSettingsProvider>
+                  </AdminMenuProvider>
+                </AdminDataProvider>
               </AdminAuthProvider>
             </CartProvider>
           </LanguageProvider>

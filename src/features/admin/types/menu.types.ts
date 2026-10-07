@@ -20,6 +20,9 @@ export interface AdminMealItem {
   isBestseller: boolean;
   isSpicy: boolean;
   isNew: boolean;
+  isVegetarian?: boolean;
+  isGlutenFree?: boolean;
+  prepTimeMinutes?: number;
   rating: number;
   reviewsCount: number;
   ingredientsAr: string[];
@@ -53,6 +56,9 @@ export interface MealFormData {
   isBestseller: boolean;
   isSpicy: boolean;
   isNew: boolean;
+  isVegetarian?: boolean;
+  isGlutenFree?: boolean;
+  prepTimeMinutes?: number;
   ingredientsArText: string;
   ingredientsEnText: string;
   options: MealOption[];
@@ -69,4 +75,4 @@ export interface CategoryFormData {
 }
 
 export type MenuStatusFilter = 'all' | 'available' | 'unavailable';
-export type MenuTagFilter = 'all' | 'signature' | 'spicy' | 'bestseller';
+export type MenuTagFilter = 'all' | 'signature' | 'spicy' | 'bestseller' | 'vegetarian' | 'new';

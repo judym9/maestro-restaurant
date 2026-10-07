@@ -1,222 +1,166 @@
 import React from 'react';
-import { Edit3, Trash2, Tag, Calendar, Sparkles } from 'lucide-react';
+import { Sparkles, Clock, Edit3, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { useLanguage } from '../../../../app/providers/LanguageProvider';
 import type { AdminPromoDeal } from '../../types/promotions.types';
 import { getMealImage } from '../../../../utils/imageRegistry';
 
-interface PromoCardProps {
-  deal: AdminPromoDeal;
-  onEdit: (deal: AdminPromoDeal) => void;
+export interface PromoCardProps {
+  promo: AdminPromoDeal;
+  onEdit: (promo: AdminPromoDeal) => void;
   onDelete: (id: string) => void;
   onToggleActive: (id: string) => void;
-  language: 'ar' | 'en';
 }
 
 export const PromoCard: React.FC<PromoCardProps> = ({
-  deal,
+  promo,
   onEdit,
   onDelete,
   onToggleActive,
-  language,
 }) => {
-  const isAr = language === 'ar';
-  const imgAsset = getMealImage(deal.imageKey);
+  const { language } = useLanguage();
+  const imageSrc = promo.imageKey.startsWith('http') || promo.imageKey.startsWith('data:')
+    ? promo.imageKey
+    : getMealImage(promo.imageKey).src;
 
-  const formattedPrice = new Intl.NumberFormat(isAr ? 'ar-SY' : 'en-US').format(deal.price);
-  const formattedOrigPrice = new Intl.NumberFormat(isAr ? 'ar-SY' : 'en-US').format(deal.originalPrice);
-  const savingsAmount = Math.max(0, deal.originalPrice - deal.price);
-  const formattedSavings = new Intl.NumberFormat(isAr ? 'ar-SY' : 'en-US').format(savingsAmount);
-
-  // Extract bundle items from title if separated by '+'
-  const bundleItems = (isAr ? deal.titleAr : deal.titleEn)
-    .split('+')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  const isExpired = deal.remainingDays <= 0;
+  const formattedPrice = promo.price.toLocaleString('ar-SY');
+  const formattedOriginal = promo.originalPrice.toLocaleString('ar-SY');
+  const savings = Math.max(0, promo.originalPrice - promo.price);
+  const formattedSavings = savings.toLocaleString('ar-SY');
 
   return (
     <div
-      className={`group relative flex flex-col justify-between rounded-xl border transition-all duration-200 bg-white dark:bg-zinc-900/60 shadow-sm hover:shadow-md min-w-0 ${
-        deal.isActive
-          ? 'border-slate-200 dark:border-zinc-800 hover:border-amber-500/40 dark:hover:border-amber-500/40'
-          : 'border-slate-200/80 dark:border-zinc-800/80 opacity-80'
-      }`}
+      className={`
+        flex flex-col rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]
+        overflow-hidden transition-all duration-300 group hover:shadow-[var(--card-hover-shadow)]
+        hover:border-[var(--border-hover)]
+        ${!promo.isActive ? 'opacity-65 grayscale-[40%]' : ''}
+      `}
     >
-      {/* Top Subtle Amber Accent Strip on Hover */}
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/40 transition-all duration-300 rounded-t-xl pointer-events-none z-10" />
+      {/* Banner Image with Overlays */}
+      <div className="relative w-full h-48 bg-slate-950 overflow-hidden shrink-0">
+        <img
+          src={imageSrc}
+          alt={language === 'ar' ? promo.titleAr : promo.titleEn}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-      {/* Top Banner Media (16:10 Aspect Ratio, Clean Photography) */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 dark:bg-zinc-950 rounded-t-xl">
-        <picture>
-          {imgAsset.webp && <source srcSet={imgAsset.webp} type="image/webp" />}
-          <img
-            src={imgAsset.src}
-            alt={isAr ? deal.titleAr : deal.titleEn}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-            loading="lazy"
-          />
-        </picture>
-
-        {/* Minimal Gradient Only for Corner Pill Legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/35 pointer-events-none" />
-
-        {/* Top Badges (Category / Royal Badge + Discount %) */}
-        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 pointer-events-none">
-          {deal.badgeAr ? (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/15 text-white text-xs font-bold shadow-sm">
-              <Tag size={12} className="text-amber-400 shrink-0" />
-              <span className="truncate">{isAr ? deal.badgeAr : deal.badgeEn}</span>
+        {/* Top Badges */}
+        <div className="absolute top-3 start-3 end-3 flex items-start justify-between gap-2 pointer-events-none">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-md">
+              <Sparkles className="w-3 h-3 stroke-[2.5]" />
+              {language === 'ar' ? promo.badgeAr : promo.badgeEn}
             </span>
-          ) : (
-            <span />
-          )}
 
-          <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-black shadow-md shadow-amber-500/25 tracking-wide font-numeric shrink-0">
-            -{deal.discountPercent}%
+            {promo.featured && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-600 text-white shadow-md">
+                {language === 'ar' ? 'مميز' : 'Featured'}
+              </span>
+            )}
+          </div>
+
+          {/* Discount Pill */}
+          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-md font-mono">
+            -{promo.discountPercent}%
           </span>
         </div>
 
-        {/* Bottom Corner: Remaining Days Pill */}
-        <div className="absolute bottom-2.5 rtl:right-2.5 ltr:left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/90">
-          <Calendar size={12} className="text-amber-400 shrink-0" />
-          <span className="font-numeric">
-            {isExpired
-              ? (isAr ? 'ينتهي اليوم' : 'Ends today')
-              : (isAr ? `متبقي ${deal.remainingDays} أيام` : `${deal.remainingDays} days left`)}
+        {/* Expiration Timer (Bottom overlay) */}
+        <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-xs text-white/95">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/65 backdrop-blur-sm border border-white/15 text-[11px] font-medium">
+            <Clock className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+            <span>
+              {language === 'ar'
+                ? `متبقي ${promo.remainingDays} أيام`
+                : `${promo.remainingDays} Days Left`}
+            </span>
+          </span>
+
+          <span
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 ${
+              promo.isActive ? 'bg-emerald-500/80 text-black' : 'bg-rose-500/80 text-white'
+            }`}
+          >
+            {promo.isActive ? (
+              <>
+                <CheckCircle2 className="w-3 h-3" />
+                {language === 'ar' ? 'نشط' : 'Active'}
+              </>
+            ) : (
+              <>
+                <XCircle className="w-3 h-3" />
+                {language === 'ar' ? 'معطل' : 'Paused'}
+              </>
+            )}
           </span>
         </div>
       </div>
 
-      {/* Card Body Section (Clean separation from media) */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4 min-w-0">
-        <div className="space-y-2">
-          {/* Offer Title */}
-          <h4 className="text-base sm:text-[17px] font-bold text-slate-900 dark:text-zinc-100 tracking-tight leading-snug group-hover:text-amber-500 transition-colors line-clamp-1">
-            {isAr ? deal.titleAr : deal.titleEn}
-          </h4>
+      {/* Content Body */}
+      <div className="flex-1 flex flex-col p-4">
+        {/* Deal Title */}
+        <h3 className="text-base font-bold text-[var(--text-primary)] tracking-tight line-clamp-1 mb-1 font-['Cairo',sans-serif]">
+          {language === 'ar' ? promo.titleAr : promo.titleEn}
+        </h3>
 
-          {/* Bundle Items Micro-Chips Breakdown (الوجبات والمكونات المشمولة في الباقة) */}
-          {bundleItems.length > 1 ? (
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {bundleItems.map((item, idx) => (
-                <span
-                  key={idx}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/80 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 text-[11px] font-semibold"
-                >
-                  <Sparkles size={11} className="text-amber-500 shrink-0" />
-                  <span>{item}</span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-              {isAr ? deal.descriptionAr : deal.descriptionEn}
-            </p>
-          )}
+        {/* Description */}
+        <p className="text-xs text-[var(--text-muted)] line-clamp-2 leading-relaxed mb-4 flex-1">
+          {language === 'ar' ? promo.descriptionAr : promo.descriptionEn}
+        </p>
 
-          {/* If chips are shown, show description snippet below */}
-          {bundleItems.length > 1 && Boolean(isAr ? deal.descriptionAr : deal.descriptionEn) && (
-            <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed pt-1">
-              {isAr ? deal.descriptionAr : deal.descriptionEn}
-            </p>
-          )}
-        </div>
-
-        {/* Pricing & Value Proposition Block */}
-        <div className="pt-3 border-t border-slate-100 dark:border-zinc-800/80 space-y-2">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            {/* Offer Price & Strikethrough Original Price */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-amber-500 tracking-tight font-numeric leading-none">
-                {formattedPrice}
-              </span>
-              <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
-                {isAr ? 'ل.س' : 'SYP'}
-              </span>
-              <span className="text-xs text-slate-400 dark:text-zinc-500 line-through font-numeric opacity-70">
-                {formattedOrigPrice}
-              </span>
-            </div>
-
-            {/* Savings Pill (مبلغ التوفير) */}
-            {savingsAmount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold font-numeric whitespace-nowrap">
-                <span>{isAr ? `وفر ${formattedSavings} ل.س` : `Save ${formattedSavings} SYP`}</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Card Footer: Status Switch + Action Buttons */}
-        <div className="pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between gap-2 flex-wrap">
-          {/* Availability / Status Toggle */}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={deal.isActive}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleActive(deal.id);
-            }}
-            className="flex items-center gap-2 group/toggle cursor-pointer select-none py-1"
-            title={deal.isActive ? (isAr ? 'تعطيل العرض' : 'Disable offer') : (isAr ? 'تفعيل العرض' : 'Activate offer')}
-          >
-            <div
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 border ${
-                deal.isActive
-                  ? 'bg-emerald-500 border-emerald-400'
-                  : 'bg-slate-200 dark:bg-zinc-800 border-slate-300 dark:border-zinc-700'
-              }`}
-            >
-              <span
-                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform duration-200 ${
-                  deal.isActive
-                    ? (isAr ? '-translate-x-4' : 'translate-x-4')
-                    : (isAr ? '-translate-x-0.5' : 'translate-x-0.5')
-                }`}
-              />
-            </div>
-            <span
-              className={`text-xs font-bold transition-colors whitespace-nowrap ${
-                deal.isActive
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-slate-500 dark:text-zinc-400'
-              }`}
-            >
-              {deal.isActive
-                ? (isAr ? 'عرض نشط' : 'Active Offer')
-                : (isAr ? 'معطل مؤقتاً' : 'Inactive')}
+        {/* Price & Savings Pill */}
+        <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] mb-4">
+          <div className="flex flex-col">
+            <span className="text-sm font-black text-[var(--accent-gold)] font-mono">
+              {formattedPrice} <span className="text-[10px] font-normal">{language === 'ar' ? 'ل.س' : 'SP'}</span>
             </span>
-          </button>
+            <span className="text-[11px] line-through text-[var(--text-muted)] font-mono">
+              {formattedOriginal} {language === 'ar' ? 'ل.س' : 'SP'}
+            </span>
+          </div>
 
-          {/* Action Buttons: Edit & Delete */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          {savings > 0 && (
+            <span className="px-2 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+              {language === 'ar' ? `وفر ${formattedSavings} ل.س` : `Save ${formattedSavings} SP`}
+            </span>
+          )}
+        </div>
+
+        {/* Card Actions Footer */}
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-[var(--border-subtle)]">
+          {/* Active Switch */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={promo.isActive}
+              onChange={() => onToggleActive(promo.id)}
+              className="sr-only peer"
+            />
+            <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 relative" />
+            <span className="text-xs font-semibold text-[var(--text-secondary)]">
+              {promo.isActive ? (language === 'ar' ? 'نشط' : 'Active') : (language === 'ar' ? 'متوقف' : 'Paused')}
+            </span>
+          </label>
+
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit(deal);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-800/60 hover:bg-amber-500/10 text-slate-700 dark:text-zinc-300 hover:text-amber-500 border border-slate-200/80 dark:border-zinc-700/80 hover:border-amber-500/30 text-xs font-bold transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-              title={isAr ? 'تعديل بيانات العرض' : 'Edit deal'}
+              onClick={() => onEdit(promo)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--accent-gold)] hover:border-[var(--accent-gold)] transition-colors"
+              title={language === 'ar' ? 'تعديل العرض' : 'Edit promotion'}
             >
-              <Edit3 size={13} className="text-amber-500" />
-              <span>{isAr ? 'تعديل' : 'Edit'}</span>
+              <Edit3 className="w-4 h-4" />
             </button>
 
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete(deal.id);
-              }}
-              className="p-1.5 rounded-lg bg-slate-50 dark:bg-zinc-800/60 hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 border border-slate-200/80 dark:border-zinc-700/80 hover:border-rose-500/30 transition-all active:scale-95 cursor-pointer"
-              title={isAr ? 'حذف العرض' : 'Delete deal'}
+              onClick={() => onDelete(promo.id)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-rose-400 hover:border-rose-500/40 transition-colors"
+              title={language === 'ar' ? 'حذف العرض' : 'Delete promotion'}
             >
-              <Trash2 size={14} />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -224,3 +168,5 @@ export const PromoCard: React.FC<PromoCardProps> = ({
     </div>
   );
 };
+
+export default PromoCard;

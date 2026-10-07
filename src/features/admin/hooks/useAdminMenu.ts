@@ -13,32 +13,11 @@ export const useAdminMenu = () => {
   const handleQuickEdit = useCallback((meal: AdminMealItem) => {
     setEditingMeal(meal);
     setIsMealModalOpen(true);
-
-    // تمرير سلس ليصبح قسم التعديل في منتصف الشاشة تماماً
-    setTimeout(() => {
-      const editSection = document.getElementById("quick-edit-section");
-      if (editSection) {
-        editSection.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 50); // تأخير بسيط لضمان اكتمال رندر المكون
   }, []);
 
   const openNewMealModal = useCallback(() => {
     setEditingMeal(null);
     setIsMealModalOpen(true);
-
-    setTimeout(() => {
-      const editSection = document.getElementById("quick-edit-section");
-      if (editSection) {
-        editSection.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 50);
   }, []);
 
   const openEditMealModal = useCallback((meal: AdminMealItem) => {

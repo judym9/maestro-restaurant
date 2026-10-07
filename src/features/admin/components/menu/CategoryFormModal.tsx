@@ -1,204 +1,245 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, FolderPlus } from 'lucide-react';
-import type { CategoryItem, CategoryFormData } from '../../types/menu.types';
+import React, { useState, useEffect } from 'react';
+import { X, Layers, Flame, Utensils, Sandwich, Sparkles, Coffee, Crown, Pizza, Fish, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../../../app/providers/LanguageProvider';
+import type { CategoryFormData, CategoryItem } from '../../types/menu.types';
 
-interface CategoryFormModalProps {
+export interface CategoryFormModalProps {
   isOpen: boolean;
+  editingCategory: CategoryItem | null;
   onClose: () => void;
   onSave: (data: CategoryFormData) => void;
-  initialData?: CategoryItem | null;
-  language: 'ar' | 'en';
 }
+
+const AVAILABLE_ICONS = [
+  { id: 'Flame', label: 'شعلة / مشاوي', Icon: Flame },
+  { id: 'Utensils', label: 'أدوات طعام / بروستد', Icon: Utensils },
+  { id: 'Sandwich', label: 'ساندويش / برغر', Icon: Sandwich },
+  { id: 'Crown', label: 'تاج / ملكي', Icon: Crown },
+  { id: 'Sparkles', label: 'نجمة / مقبلات', Icon: Sparkles },
+  { id: 'Coffee', label: 'مشروبات', Icon: Coffee },
+  { id: 'Pizza', label: 'بيتزا / معجنات', Icon: Pizza },
+  { id: 'Fish', label: 'مأكولات بحرية', Icon: Fish },
+];
 
 export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   isOpen,
+  editingCategory,
   onClose,
   onSave,
-  initialData,
-  language,
 }) => {
-  const isAr = language === 'ar';
+  const { language } = useLanguage();
 
   const [nameAr, setNameAr] = useState('');
   const [nameEn, setNameEn] = useState('');
   const [slug, setSlug] = useState('');
+  const [icon, setIcon] = useState('Flame');
+  const [isActive, setIsActive] = useState(true);
+  const [sortOrder, setSortOrder] = useState<number>(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const cardRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Sync initial data when modal opens
   useEffect(() => {
-    if (initialData) {
-      setNameAr(initialData.nameAr);
-      setNameEn(initialData.nameEn);
-      setSlug(initialData.slug);
+    if (!isOpen) return;
+
+    if (editingCategory) {
+      setNameAr(editingCategory.nameAr);
+      setNameEn(editingCategory.nameEn);
+      setSlug(editingCategory.slug);
+      setIcon(editingCategory.icon || 'Flame');
+      setIsActive(editingCategory.isActive);
+      setSortOrder(editingCategory.sortOrder || 1);
     } else {
       setNameAr('');
       setNameEn('');
       setSlug('');
+      setIcon('Flame');
+      setIsActive(true);
+      setSortOrder(1);
     }
-  }, [initialData, isOpen]);
-
-  // Smooth scroll to center, focus, lock body scroll, and listen for Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const scrollTimer = setTimeout(() => {
-      const categorySection = cardRef.current || document.getElementById('add-category-section');
-      if (categorySection) {
-        categorySection.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }
-    }, 50);
-
-    const focusTimer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 120);
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      clearTimeout(scrollTimer);
-      clearTimeout(focusTimer);
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nameAr.trim() || !nameEn.trim()) return;
-
-    onSave({
-      id: initialData?.id,
-      nameAr: nameAr.trim(),
-      nameEn: nameEn.trim(),
-      slug: slug.trim() || `cat-${Date.now()}`,
-      isActive: true,
-      sortOrder: initialData ? initialData.sortOrder : 1,
-    });
-  };
+    setErrors({});
+  }, [isOpen, editingCategory]);
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
 
-      {/* Modal Dialog Card */}
-      <div
-        id="add-category-section"
-        ref={cardRef}
-        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex flex-col p-6 shadow-2xl z-10 text-slate-900 dark:text-zinc-100 animate-in fade-in zoom-in-95 duration-200 my-auto"
-      >
+    if (!nameAr.trim()) {
+      newErrors.nameAr = language === 'ar' ? 'اسم الفئة بالعربية مطلوب' : 'Arabic name is required';
+    }
+    if (!nameEn.trim()) {
+      newErrors.nameEn = language === 'ar' ? 'اسم الفئة بالإنجليزية مطلوب' : 'English name is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const generatedSlug = slug.trim()
+      ? slug.trim().toLowerCase().replace(/\s+/g, '-')
+      : nameEn.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+    onSave({
+      id: editingCategory ? editingCategory.id : undefined,
+      nameAr: nameAr.trim(),
+      nameEn: nameEn.trim(),
+      slug: generatedSlug,
+      icon,
+      isActive,
+      sortOrder: Number(sortOrder) || 1,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+
+      <div className="relative w-full max-w-md rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] p-6 shadow-2xl z-10 animate-scale-up">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-4 mb-5 shrink-0">
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
-              <FolderPlus size={18} />
-            </span>
-            <span>
-              {initialData
-                ? (isAr ? 'تعديل التصنيف' : 'Edit Category')
-                : (isAr ? 'إضافة تصنيف جديد' : 'Add New Category')}
-            </span>
-          </h3>
+        <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)] mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[var(--text-primary)]">
+                {editingCategory
+                  ? language === 'ar'
+                    ? 'تعديل فئة الطعام'
+                    : 'Edit Food Category'
+                  : language === 'ar'
+                  ? 'إضافة فئة طعام جديدة'
+                  : 'Add New Food Category'}
+              </h3>
+            </div>
+          </div>
 
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              onClose();
-            }}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            aria-label="Close modal"
+            onClick={onClose}
+            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg transition-colors"
           >
-            <X size={18} />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-              {isAr ? 'اسم التصنيف بالعربية *' : 'Category Name (Arabic) *'}
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-[var(--text-secondary)]">
+              {language === 'ar' ? 'اسم الفئة (بالعربية) *' : 'Category Name (Arabic) *'}
             </label>
             <input
-              ref={inputRef}
               type="text"
-              required
               value={nameAr}
               onChange={(e) => setNameAr(e.target.value)}
-              placeholder={isAr ? 'مثال: وجبات سريعة، مقبلات...' : 'e.g. Fast Food, Appetizers...'}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors"
+              placeholder="مثال: المشاوي الملكية"
+              className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] ${
+                errors.nameAr ? 'border-rose-500' : 'border-[var(--border-subtle)]'
+              }`}
               dir="rtl"
             />
+            {errors.nameAr && (
+              <span className="text-[11px] text-rose-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.nameAr}
+              </span>
+            )}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-              {isAr ? 'اسم التصنيف بالإنجليزية *' : 'Category Name (English) *'}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-[var(--text-secondary)]">
+              {language === 'ar' ? 'اسم الفئة (بالإنجليزية) *' : 'Category Name (English) *'}
             </label>
             <input
               type="text"
-              required
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
-              placeholder="e.g. Fast Food, Appetizers..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left"
+              placeholder="e.g. Royal Grills"
+              className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] ${
+                errors.nameEn ? 'border-rose-500' : 'border-[var(--border-subtle)]'
+              }`}
               dir="ltr"
             />
+            {errors.nameEn && (
+              <span className="text-[11px] text-rose-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.nameEn}
+              </span>
+            )}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
-              {isAr ? 'الرمز التعريفي (Slug)' : 'URL Slug'}
+          {/* Icon Picker */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-[var(--text-secondary)]">
+              {language === 'ar' ? 'أيقونة التصنيف:' : 'Category Icon:'}
             </label>
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="e.g. fast-food"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/30 text-sm transition-colors text-left font-mono"
-              dir="ltr"
-            />
+            <div className="grid grid-cols-4 gap-2">
+              {AVAILABLE_ICONS.map(({ id, Icon }) => {
+                const isSelected = icon === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setIcon(id)}
+                    className={`
+                      flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs transition-all
+                      ${
+                        isSelected
+                          ? 'border-[var(--accent-gold)] bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] font-bold scale-105'
+                          : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }
+                    `}
+                  >
+                    <Icon className="w-5 h-5 stroke-[2]" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-end gap-3 mt-4 shrink-0">
+          {/* Active status & Sort order */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+                className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
+              />
+              <span>{language === 'ar' ? 'الفئة نشطة وظاهرة في القائمة' : 'Active Category'}</span>
+            </label>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-[var(--text-muted)]">{language === 'ar' ? 'الترتيب:' : 'Order:'}</span>
+              <input
+                type="number"
+                min="1"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(Number(e.target.value) || 1)}
+                className="w-14 px-2 py-1 text-xs rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono text-center outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-[var(--border-subtle)]">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-              }}
-              className="px-4 py-2 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-xs font-semibold cursor-pointer"
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors min-h-[42px]"
             >
-              {isAr ? 'إلغاء' : 'Cancel'}
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
-
             <button
               type="submit"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2 rounded-xl shadow-sm transition-all active:scale-95 text-xs cursor-pointer"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
             >
-              {initialData ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إضافة التصنيف' : 'Add Category')}
+              {editingCategory
+                ? language === 'ar'
+                  ? 'حفظ التعديلات'
+                  : 'Save Changes'
+                : language === 'ar'
+                ? 'إضافة الفئة'
+                : 'Create Category'}
             </button>
           </div>
         </form>
@@ -206,3 +247,5 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
     </div>
   );
 };
+
+export default CategoryFormModal;

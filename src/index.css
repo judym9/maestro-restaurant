@@ -53,6 +53,25 @@ html.dark {
   --muted-text: #94A3B8;
 }
 
+[data-theme='mastro-luxury'],
+html.mastro-luxury {
+  --background: #06090E;
+  --card: #131926;
+  --foreground: #FFFDF8;
+  --muted: #94A3B8;
+  --border: rgba(245, 158, 11, 0.22);
+  --sidebar: #0D121D;
+  --primary: #F59E0B;
+
+  --border-color: rgba(245, 158, 11, 0.22);
+  --bg-page: #06090E;
+  --text-color: #FFFDF8;
+  --card-bg: #131926;
+  --card-text: #FFFDF8;
+  --muted-bg: #0D121D;
+  --muted-text: #94A3B8;
+}
+
 [data-theme='light'],
 html.light {
   --background: #FAF8F5;
@@ -495,41 +514,4 @@ section,
 
 .animate-scale-up {
   animation: scaleUp 0.3s var(--transition-smooth) forwards;
-}
-
-/* Custom Admin Scrollbar */
-.custom-admin-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.custom-admin-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-admin-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 9999px;
-}
-.custom-admin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
-}
-.custom-admin-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
-}
-
-/* Quick Edit Entrance Animation */
-@keyframes quickEditZoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.zoom-in-95,
-[id="quick-edit-section"] {
-  animation: quickEditZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

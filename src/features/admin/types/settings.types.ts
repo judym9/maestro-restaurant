@@ -1,9 +1,16 @@
 export interface BranchContactInfo {
   restaurantNameAr: string;
   restaurantNameEn: string;
+  taglineAr?: string;
+  taglineEn?: string;
+  aboutStoryAr?: string;
+  aboutStoryEn?: string;
+  logoUrl?: string;
+  coverBannerUrl?: string;
   phonePrimary: string;
   phoneSecondary: string;
   whatsappNumber: string;
+  emailContact?: string;
   addressAr: string;
   addressEn: string;
   googleMapsUrl: string;
@@ -11,6 +18,9 @@ export interface BranchContactInfo {
   workingHoursEn: string;
   cityAr?: string;
   cityEn?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
 }
 
 export interface DaySchedule {
@@ -25,6 +35,7 @@ export interface DaySchedule {
 export interface OperatingSchedule {
   isOpen: boolean;
   autoToggle: boolean;
+  is24HourFormat?: boolean;
   openingTime: string;
   closingTime: string;
   emergencyNoticeAr: string;
@@ -33,11 +44,13 @@ export interface OperatingSchedule {
   weeklySchedule?: DaySchedule[];
   minOrderAmount?: number;
   deliveryFee?: number;
+  taxRatePercent?: number;
   estimatedDeliveryTimeAr?: string;
   estimatedDeliveryTimeEn?: string;
 }
 
 export interface ThemeTokens {
+  presetId?: string;
   primaryAccent: string;
   darkBg: string;
   darkSurface: string;
@@ -45,6 +58,9 @@ export interface ThemeTokens {
   lightBg: string;
   lightSurface: string;
   lightBorder: string;
+  textPrimary?: string;
+  darkText?: string;
+  lightText?: string;
   fontFamily?: string;
   secondaryAccent?: string;
   successColor?: string;
@@ -52,3 +68,4 @@ export interface ThemeTokens {
   logoUrl?: string;
   bannerUrl?: string;
 }
+
