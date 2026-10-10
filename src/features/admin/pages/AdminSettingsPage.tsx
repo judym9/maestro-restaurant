@@ -69,24 +69,24 @@ export const AdminSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <SlidersHorizontal className="w-6 h-6 text-amber-500" />
+          <h1 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+            <SlidersHorizontal className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
             <span>إعدادات المطعم والفرع</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
             إدارة الهوية الرسمية، بيانات التواصل، الجدول الأسبوعي، وشروط التوصيل لفرع النبك
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors active:scale-95"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>استعادة</span>
@@ -95,7 +95,7 @@ export const AdminSettingsPage: React.FC = () => {
           <button
             type="button"
             onClick={handleSaveAll}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
           >
             <Save className="w-4 h-4" />
             <span>حفظ الإعدادات</span>
@@ -103,8 +103,8 @@ export const AdminSettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto pb-3 scrollbar-none">
+      {/* Tabs Navigation: frictionless horizontal scrolling */}
+      <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto pb-2.5 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {[
           { id: 'identity', label: 'هوية المطعم والقصة', icon: Store },
           { id: 'contact', label: 'الاتصال والموقع الجغرافي', icon: Phone },
@@ -119,7 +119,7 @@ export const AdminSettingsPage: React.FC = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as SettingsTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
                 isActive
                   ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
@@ -134,7 +134,7 @@ export const AdminSettingsPage: React.FC = () => {
 
       {/* Tab 1: Restaurant Identity & Story */}
       {activeTab === 'identity' && (
-        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+        <div className="p-4.5 sm:p-7 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-5 sm:space-y-7">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">
@@ -265,7 +265,7 @@ export const AdminSettingsPage: React.FC = () => {
 
       {/* Tab 2: Contact Info & Location */}
       {activeTab === 'contact' && (
-        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+        <div className="p-4.5 sm:p-7 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-5 sm:space-y-7">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">
@@ -370,7 +370,7 @@ export const AdminSettingsPage: React.FC = () => {
 
       {/* Tab 3: Weekly Schedule & Emergency Notice */}
       {activeTab === 'schedule' && (
-        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+        <div className="p-4.5 sm:p-7 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-5 sm:space-y-7">
           {/* Emergency Announcement Banner */}
           <div className="p-5 sm:p-5.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-3.5">
             <div className="flex items-center justify-between">
@@ -439,7 +439,7 @@ export const AdminSettingsPage: React.FC = () => {
 
       {/* Tab 4: Delivery Terms & Min Order */}
       {activeTab === 'delivery' && (
-        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+        <div className="p-4.5 sm:p-7 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-5 sm:space-y-7">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2">

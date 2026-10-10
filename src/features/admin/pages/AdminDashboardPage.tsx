@@ -122,27 +122,27 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Executive Command Header */}
-      <div className="relative p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-gradient-to-br from-[#0c121f] via-[#090d16] to-[#06090e] border border-slate-800 shadow-2xl overflow-hidden">
+      <div className="relative p-4.5 sm:p-7 rounded-2xl bg-gradient-to-br from-[#0c121f] via-[#090d16] to-[#06090e] border border-slate-800/80 shadow-xl overflow-hidden">
         <div className="absolute top-0 end-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-2 sm:space-y-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
                 <Flame className="w-3.5 h-3.5" />
                 <span>الفرع الرئيسي — النبك، ريف دمشق</span>
               </span>
-              <span className="text-xs text-slate-500">•</span>
-              <span className="text-xs text-slate-400">لوحة القيادة والمؤشرات</span>
+              <span className="text-xs text-slate-500 hidden sm:inline">•</span>
+              <span className="text-[11px] sm:text-xs text-slate-400 hidden sm:inline">لوحة القيادة والمؤشرات</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight">
               إدارة مطعم مايسترو الملكي
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-400 max-w-xl leading-relaxed">
               الإشراف الشامل على كتالوج الطعام، حزم التوفير الملكية، وسرعة تلبية الطلبات لفرع النبك لحظياً.
             </p>
           </div>
@@ -150,25 +150,25 @@ export const AdminDashboardPage: React.FC = () => {
           {/* Master Kitchen Switch Card */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <div
-              className={`flex items-center justify-between gap-4.5 p-5 sm:p-5.5 rounded-2xl border transition-all ${
+              className={`flex items-center justify-between gap-3 sm:gap-4.5 p-3 sm:p-5 rounded-2xl border transition-all ${
                 restaurantSettings.isKitchenOpen
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-lg shadow-emerald-500/5'
                   : 'bg-rose-500/10 border-rose-500/30 text-rose-300 shadow-lg shadow-rose-500/5'
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div
-                  className={`w-3.5 h-3.5 rounded-full ${
+                  className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full ${
                     restaurantSettings.isKitchenOpen
                       ? 'bg-emerald-400 animate-ping'
                       : 'bg-rose-400'
                   }`}
                 />
                 <div>
-                  <span className="text-xs font-medium text-slate-400 block">
+                  <span className="text-[10px] sm:text-xs font-medium text-slate-400 block">
                     حالة استقبال الطلبات
                   </span>
-                  <span className="text-sm font-extrabold block">
+                  <span className="text-xs sm:text-sm font-extrabold block">
                     {restaurantSettings.isKitchenOpen
                       ? 'المطبخ يستقبل الطلبات'
                       : 'المطبخ متوقف مؤقتاً'}
@@ -179,7 +179,7 @@ export const AdminDashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleToggleKitchen}
-                className={`px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 ${
+                className={`px-3 sm:px-4.5 py-1.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 ${
                   restaurantSettings.isKitchenOpen
                     ? 'bg-rose-600 hover:bg-rose-500 text-white'
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white'
@@ -192,12 +192,12 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4 KPI Telemetry Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      {/* 4 KPI Telemetry Cards: 2-column on mobile, 4-column on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <MetricCard
           title="أصناف القائمة الملكية"
           value={dishes.length}
-          subtitle={`${availableDishesCount} وجبة متاحة للطلب الفوري`}
+          subtitle={`${availableDishesCount} وجبة متاحة`}
           icon={UtensilsCrossed}
           badge={{ text: 'نشط', variant: 'gold' }}
           onClick={() => navigate('/admin/menu')}
@@ -206,7 +206,7 @@ export const AdminDashboardPage: React.FC = () => {
         <MetricCard
           title="أقسام وتصنيفات الطعام"
           value={categories.length}
-          subtitle="مفهرسة في قائمة المتجر"
+          subtitle="مفهرسة بالقائمة"
           icon={Layers}
           badge={{ text: 'محدثة', variant: 'info' }}
           onClick={() => navigate('/admin/menu')}
@@ -215,16 +215,16 @@ export const AdminDashboardPage: React.FC = () => {
         <MetricCard
           title="العروض الملكية النشطة"
           value={activePromosCount}
-          subtitle={`${promotions.length} حزمة مسجلة بالنظام`}
+          subtitle={`${promotions.length} حزمة مسجلة`}
           icon={Sparkles}
           badge={{ text: 'توفير', variant: 'warning' }}
           onClick={() => navigate('/admin/promotions')}
         />
 
         <MetricCard
-          title="وقت التوصيل التقديري"
-          value={restaurantSettings.deliveryTimeAr || '30 - 45 دقيقة'}
-          subtitle="تغطية كامل مدينة النبك"
+          title="التوصيل التقديري"
+          value={restaurantSettings.deliveryTimeAr ? '30-45 د' : '30-45 د'}
+          subtitle="تغطية كامل النبك"
           icon={Clock}
           badge={{ text: 'سريع', variant: 'success' }}
           onClick={() => navigate('/admin/settings')}
@@ -232,55 +232,55 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Quick Command Bar */}
-      <div className="p-4.5 sm:p-5 rounded-2xl bg-[#0b101b] border border-slate-800/80 flex flex-wrap items-center justify-between gap-3.5">
+      <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <span className="text-xs font-bold text-slate-300">
           إجراءات سريعة:
         </span>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleOpenAddMeal}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-md shadow-amber-500/20 active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-md shadow-amber-500/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>إضافة وجبة ملكية</span>
+            <span>إضافة وجبة</span>
           </button>
 
           <button
             type="button"
             onClick={() => navigate('/admin/promotions')}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>إدارة العروض الترويجية</span>
+            <span>العروض</span>
           </button>
 
           <button
             type="button"
             onClick={() => navigate('/admin/settings')}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors active:scale-95"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-            <span>ساعات الدوام والتواصل</span>
+            <span>الدوام والتواصل</span>
           </button>
 
           <button
             type="button"
             onClick={() => navigate('/admin/theme')}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors active:scale-95"
           >
             <Palette className="w-3.5 h-3.5 text-amber-400" />
-            <span>تخصيص الهوية والمظهر</span>
+            <span>الهوية والمظهر</span>
           </button>
         </div>
       </div>
 
       {/* Signature & Bestsellers Roster */}
-      <div className="space-y-4">
+      <div className="space-y-3.5 sm:space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <span>أبرز وجبات القائمة التوقيعية والأكثر طلباً</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -298,7 +298,7 @@ export const AdminDashboardPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4.5">
           {displayDishes.map((dish) => {
             const cat = categories.find((c) => c.id === dish.categoryId);
 
@@ -321,8 +321,8 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Operational Branch Profile Card */}
-      <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-5 sm:space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div className="p-4.5 sm:p-7 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-4 sm:space-y-6">
+        <div className="flex items-center justify-between pb-3.5 sm:pb-4 border-b border-slate-800/80">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
               <Store className="w-5 h-5" />

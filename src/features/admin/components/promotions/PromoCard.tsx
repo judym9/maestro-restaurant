@@ -47,7 +47,7 @@ export const PromoCard: React.FC<PromoCardProps> = ({
       }`}
     >
       {/* Promo Visual Header */}
-      <div className="relative h-48 w-full bg-slate-900 rounded-t-2xl overflow-hidden">
+      <div className="relative h-38 sm:h-48 w-full bg-slate-900 rounded-t-2xl overflow-hidden">
         <img
           src={imageAsset.webp || imageAsset.src}
           alt={promo.titleAr}
@@ -57,31 +57,31 @@ export const PromoCard: React.FC<PromoCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-[#0b101b] via-transparent to-black/50" />
 
         {/* Top Badges */}
-        <div className="absolute top-4 start-4 flex flex-wrap gap-2 z-10">
+        <div className="absolute top-3 start-3 sm:top-4 sm:start-4 flex flex-wrap gap-1.5 sm:gap-2 z-10">
           {discountPercent > 0 && (
-            <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-md font-mono flex items-center gap-1">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black bg-rose-600 text-white shadow-md font-mono flex items-center gap-1">
               <Percent className="w-3 h-3" />
               <span>خصم {discountPercent}%</span>
             </span>
           )}
           {promo.badgeAr && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>{promo.badgeAr}</span>
             </span>
           )}
         </div>
 
         {/* Countdown / Remaining Days Chip */}
-        <div className="absolute top-4 end-4 z-10">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-black/75 text-amber-300 border border-amber-500/30 backdrop-blur-md shadow-md">
-            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+        <div className="absolute top-3 end-3 sm:top-4 sm:end-4 z-10">
+          <span className="flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-black/75 text-amber-300 border border-amber-500/30 backdrop-blur-md shadow-md">
+            <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
             <span>متبقي {promo.remainingDays} أيام</span>
           </span>
         </div>
 
         {/* Active Switch Overlay */}
-        <div className="absolute bottom-4 end-4 z-10">
+        <div className="absolute bottom-3 end-3 sm:bottom-4 end-4 z-10">
           <button
             type="button"
             onClick={(e) => {
@@ -89,7 +89,7 @@ export const PromoCard: React.FC<PromoCardProps> = ({
               onToggleActive(promo.id);
             }}
             title={promo.isActive ? 'إيقاف نشر العرض' : 'تنشيط ونشر العرض'}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border backdrop-blur-md transition-all shadow-md ${
+            className={`flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold border backdrop-blur-md transition-all shadow-md ${
               promo.isActive
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
                 : 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
@@ -111,17 +111,17 @@ export const PromoCard: React.FC<PromoCardProps> = ({
       </div>
 
       {/* Promo Content */}
-      <div className="px-5 sm:px-6 pt-5 pb-6 flex-1 flex flex-col justify-between space-y-4">
+      <div className="px-4 sm:px-6 pt-3.5 pb-4 sm:pt-5 sm:pb-6 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
         <div>
-          <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+          <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
             {promo.titleAr}
           </h3>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-[10px] sm:text-xs text-slate-400 font-mono mt-0.5">
             {promo.titleEn}
           </p>
 
           {promo.descriptionAr && (
-            <p className="text-xs text-slate-400 line-clamp-2 mt-2 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
               {promo.descriptionAr}
             </p>
           )}

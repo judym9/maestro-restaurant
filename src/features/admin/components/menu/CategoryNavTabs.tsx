@@ -24,7 +24,7 @@ export const CategoryNavTabs: React.FC<CategoryNavTabsProps> = ({
   totalDishesCount,
 }) => {
   return (
-    <div className="w-full flex items-center justify-between gap-3 overflow-x-auto pb-2 scrollbar-none">
+    <div className="w-full flex items-center justify-between gap-2.5 sm:gap-3 overflow-x-auto pb-2 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="flex items-center gap-2 shrink-0">
         {/* All Categories Tab */}
         <button

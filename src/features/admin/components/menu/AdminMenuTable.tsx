@@ -39,7 +39,7 @@ export const AdminMenuTable: React.FC<AdminMenuTableProps> = ({
 
   return (
     <div className="w-full overflow-x-auto rounded-2xl border border-slate-800 bg-[#0b101b] shadow-xl">
-      <table className="w-full text-start border-collapse text-xs sm:text-sm">
+      <table className="w-full min-w-[680px] text-start border-collapse text-xs sm:text-sm">
         <thead>
           <tr className="border-b border-slate-800 bg-[#0e1422] text-slate-400 font-semibold text-[11px] sm:text-xs uppercase tracking-wider">
             <th className="py-4 ps-6 pe-4 text-start">الوجبة</th>

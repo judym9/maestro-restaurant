@@ -44,7 +44,7 @@ export const MealCard: React.FC<MealCardProps> = ({
       }`}
     >
       {/* Dish Visual Header */}
-      <div className="relative h-44 w-full bg-slate-900 rounded-t-2xl overflow-hidden">
+      <div className="relative h-36 sm:h-44 w-full bg-slate-900 rounded-t-2xl overflow-hidden">
         <img
           src={imageAsset.webp || imageAsset.src}
           alt={meal.nameAr}
@@ -54,28 +54,28 @@ export const MealCard: React.FC<MealCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-[#0b101b] via-transparent to-black/40" />
 
         {/* Top Badges */}
-        <div className="absolute top-4 start-4 flex flex-wrap gap-2 z-10">
+        <div className="absolute top-3 start-3 sm:top-4 sm:start-4 flex flex-wrap gap-1.5 sm:gap-2 z-10">
           {discountPercent > 0 && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white shadow-sm font-mono">
+            <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-rose-600 text-white shadow-sm font-mono">
               خصم {discountPercent}%
             </span>
           )}
           {meal.isSignature && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950 flex items-center gap-1 shadow-sm">
-              <Crown className="w-3.5 h-3.5" />
+            <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500 text-slate-950 flex items-center gap-1 shadow-sm">
+              <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>توقيع الشيف</span>
             </span>
           )}
           {meal.isBestseller && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-600 text-white flex items-center gap-1 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-600 text-white flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>الأكثر طلباً</span>
             </span>
           )}
         </div>
 
         {/* Availability Quick Switch in Top End Corner */}
-        <div className="absolute top-4 end-4 z-10">
+        <div className="absolute top-3 end-3 sm:top-4 sm:end-4 z-10">
           <button
             type="button"
             onClick={(e) => {
@@ -83,7 +83,7 @@ export const MealCard: React.FC<MealCardProps> = ({
               onToggleAvailability(meal.id);
             }}
             title={meal.isAvailable ? 'تعطيل التوفر مؤقتاً' : 'تفعيل التوفر للطلب'}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-md transition-all shadow-sm ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold border backdrop-blur-md transition-all shadow-sm ${
               meal.isAvailable
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
                 : 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
@@ -91,12 +91,12 @@ export const MealCard: React.FC<MealCardProps> = ({
           >
             {meal.isAvailable ? (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
                 <span>متوفر</span>
               </>
             ) : (
               <>
-                <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400" />
                 <span>غير متوفر</span>
               </>
             )}
@@ -105,8 +105,8 @@ export const MealCard: React.FC<MealCardProps> = ({
 
         {/* Category Chip */}
         {category && (
-          <div className="absolute bottom-3 start-4 z-10">
-            <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-black/70 text-slate-200 backdrop-blur-md border border-white/10 shadow-sm">
+          <div className="absolute bottom-2.5 start-3 sm:bottom-3 sm:start-4 z-10">
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-medium bg-black/70 text-slate-200 backdrop-blur-md border border-white/10 shadow-sm">
               {category.icon || '🍽️'} {category.nameAr}
             </span>
           </div>
@@ -114,29 +114,29 @@ export const MealCard: React.FC<MealCardProps> = ({
       </div>
 
       {/* Dish Body Details */}
-      <div className="px-5 sm:px-6 pt-4.5 pb-5 flex-1 flex flex-col justify-between space-y-4">
+      <div className="px-3.5 sm:px-6 pt-3.5 pb-4 sm:pt-4.5 sm:pb-5 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
         <div>
-          <div className="flex items-start justify-between gap-2.5">
+          <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-1">
+              <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-1">
                 {meal.nameAr}
               </h3>
-              <p className="text-[11px] text-slate-400 font-mono line-clamp-1 mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono line-clamp-1 mt-0.5">
                 {meal.nameEn}
               </p>
             </div>
 
             {/* Preparation Time */}
             {meal.prepTimeMinutes && (
-              <span className="shrink-0 flex items-center gap-1 text-xs text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-xs text-slate-400 bg-slate-900 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-slate-800">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
                 <span>{meal.prepTimeMinutes} د</span>
               </span>
             )}
           </div>
 
           {meal.descriptionAr && (
-            <p className="text-xs text-slate-400 line-clamp-2 mt-2 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
               {meal.descriptionAr}
             </p>
           )}

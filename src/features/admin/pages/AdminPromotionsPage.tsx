@@ -74,15 +74,15 @@ export const AdminPromotionsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <Sparkles className="w-6 h-6 text-amber-500" />
+          <h1 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
             <span>إدارة العروض الترويجية الملكية</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
             إطلاق باقات التوفير العائلية، الخصومات الحصرية، والوجبات الترويجية المركبة
           </p>
         </div>
@@ -90,37 +90,38 @@ export const AdminPromotionsPage: React.FC = () => {
         <button
           type="button"
           onClick={handleOpenNewPromo}
-          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
+          className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>إنشاء عرض ملكي جديد</span>
         </button>
       </div>
 
-      {/* 3 Telemetry Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+      {/* 3 Telemetry Metrics: 2-column on mobile with 3rd item spanning, 3-col on desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4.5">
         <MetricCard
-          title="إجمالي العروض الترويجية"
+          title="إجمالي العروض"
           value={totalPromos}
-          subtitle="باقات وحزم مسجلة"
+          subtitle="باقات مسجلة"
           icon={Tag}
           badge={{ text: 'شامل', variant: 'gold' }}
         />
 
         <MetricCard
-          title="العروض النشطة الحالية"
+          title="العروض النشطة"
           value={activeCount}
-          subtitle="معروضة للعملاء في واجهة المتجر"
+          subtitle="معروضة للزبائن"
           icon={CheckCircle2}
           badge={{ text: 'معروضة', variant: 'success' }}
         />
 
         <MetricCard
-          title="متوسط نسبة التخفيض"
+          title="متوسط التخفيض"
           value={`${avgDiscount}%`}
-          subtitle="نسب التوفير التنافسية"
+          subtitle="نسب التوفير"
           icon={Percent}
           badge={{ text: 'توفير', variant: 'warning' }}
+          className="col-span-2 sm:col-span-1"
         />
       </div>
 
@@ -133,7 +134,7 @@ export const AdminPromotionsPage: React.FC = () => {
           onAction={handleOpenNewPromo}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {promos.map((promo) => (
             <PromoCard
               key={promo.id}

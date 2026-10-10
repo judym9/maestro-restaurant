@@ -201,46 +201,46 @@ export const AdminMenuPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <UtensilsCrossed className="w-6 h-6 text-amber-500" />
+          <h1 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <UtensilsCrossed className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
             <span>إدارة قائمة المأكولات والتصنيفات</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
             إضافة وتعديل الوجبات الملكية، تصنيف الأطباق، ومتابعة توفرها لحظياً
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleOpenNewCategory}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors active:scale-95"
           >
             <Layers className="w-4 h-4 text-amber-400" />
-            <span>إدارة التصنيفات</span>
+            <span>التصنيفات</span>
           </button>
 
           <button
             type="button"
             onClick={handleOpenNewMeal}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>إضافة وجبة جديدة</span>
+            <span>إضافة وجبة</span>
           </button>
         </div>
       </div>
 
-      {/* 4 Telemetry Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      {/* 4 Telemetry Metrics: 2-column on mobile, 4-column on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <MetricCard
           title="إجمالي الوجبات"
           value={totalDishes}
-          subtitle="مسجلة في قاعدة البيانات"
+          subtitle="مسجلة بالنظام"
           icon={UtensilsCrossed}
           badge={{ text: 'شامل', variant: 'gold' }}
         />
@@ -248,23 +248,23 @@ export const AdminMenuPage: React.FC = () => {
         <MetricCard
           title="الوجبات المتوفرة"
           value={availableCount}
-          subtitle="متاحة للطلب الفوري في المتجر"
+          subtitle="متاحة للطلب"
           icon={CheckCircle2}
           badge={{ text: 'متاحة', variant: 'success' }}
         />
 
         <MetricCard
-          title="أقسام وتصنيفات الطعام"
+          title="أقسام وتصنيفات"
           value={activeCategoriesCount}
-          subtitle="أقسام مفهرسة بالقائمة"
+          subtitle="أقسام مفهرسة"
           icon={Layers}
           badge={{ text: 'نشطة', variant: 'info' }}
         />
 
         <MetricCard
-          title="أصناف معطلة مؤقتاً"
+          title="أصناف معطلة"
           value={unavailableCount}
-          subtitle="غير متوفرة حالياً للزبائن"
+          subtitle="غير متوفرة حالياً"
           icon={XCircle}
           badge={{ text: 'معطلة', variant: 'danger' }}
         />
@@ -284,7 +284,7 @@ export const AdminMenuPage: React.FC = () => {
       </div>
 
       {/* Search, Filter Chips, Sort & View Controls */}
-      <div className="px-5 sm:px-6 py-5 sm:py-5.5 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-4">
+      <div className="px-4 sm:px-6 py-4 sm:py-5 rounded-2xl bg-slate-900/50 sm:bg-[#0b101b] border border-slate-800/80 space-y-3.5 sm:space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
           {/* Live Search */}
           <div className="w-full md:w-80">
@@ -295,14 +295,14 @@ export const AdminMenuPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between md:justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-between md:justify-end gap-2.5 sm:gap-3">
             {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-2 flex-1 sm:flex-none">
+              <ArrowUpDown className="w-4 h-4 text-slate-500 shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500"
+                className="w-full sm:w-auto px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500"
               >
                 <option value="default">الترتيب الافتراضي</option>
                 <option value="price-asc">السعر: من الأقل للأعلى</option>
@@ -342,8 +342,8 @@ export const AdminMenuPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none text-xs">
+        {/* Filter Chips: frictionless horizontal scroll with hidden scrollbars */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-xs">
           <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0 me-1" />
           {[
             { id: 'all', label: 'الكل' },
@@ -361,7 +361,7 @@ export const AdminMenuPage: React.FC = () => {
                 key={chip.id}
                 type="button"
                 onClick={() => setActiveFilterChip(chip.id as FilterChip)}
-                className={`px-3.5 py-1.5 rounded-xl font-medium transition-colors whitespace-nowrap text-xs ${
+                className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-medium transition-colors whitespace-nowrap text-xs ${
                   isActive
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                     : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -387,7 +387,7 @@ export const AdminMenuPage: React.FC = () => {
           onAction={handleOpenNewMeal}
         />
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
           {filteredDishes.map((dish) => {
             const cat = categories.find((c) => c.id === dish.categoryId);
 

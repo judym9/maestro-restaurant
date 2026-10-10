@@ -202,6 +202,8 @@
   border-top: 1px solid var(--border-subtle);
   gap: 1rem;
   max-height: calc(100vh - 4.75rem);
+  max-height: calc(100dvh - 4.75rem);
+  padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
