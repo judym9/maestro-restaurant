@@ -1,218 +1,212 @@
 import React from 'react';
 import {
-  Edit3,
-  Trash2,
   Clock,
-  Sparkles,
+  Edit2,
+  Copy,
+  Trash2,
   Flame,
-  Award,
-  Layers,
+  Crown,
+  Sparkles,
   Leaf,
   CheckCircle2,
   XCircle,
-  Copy,
 } from 'lucide-react';
-import { useLanguage } from '../../../../app/providers/LanguageProvider';
-import type { AdminMealItem } from '../../types/menu.types';
+import type { AdminMealItem, CategoryItem } from '../../types/menu.types';
+import { calculateDiscountPercentage, formatCurrencySYP } from '../../utils/mathCalculations';
 import { getMealImage } from '../../../../utils/imageRegistry';
 
 export interface MealCardProps {
   meal: AdminMealItem;
-  categoryName?: string;
+  category?: CategoryItem;
   onEdit: (meal: AdminMealItem) => void;
-  onDuplicate?: (meal: AdminMealItem) => void;
+  onDuplicate: (meal: AdminMealItem) => void;
   onDelete: (id: string) => void;
   onToggleAvailability: (id: string) => void;
 }
 
 export const MealCard: React.FC<MealCardProps> = ({
   meal,
-  categoryName,
+  category,
   onEdit,
   onDuplicate,
   onDelete,
   onToggleAvailability,
 }) => {
-  const { language } = useLanguage();
-  const imageSrc = meal.imageKey.startsWith('http') || meal.imageKey.startsWith('data:')
-    ? meal.imageKey
-    : getMealImage(meal.imageKey).src;
-
-  const formattedPrice = meal.price.toLocaleString('ar-SY');
-  const formattedOriginal = meal.originalPrice?.toLocaleString('ar-SY');
+  const discountPercent = calculateDiscountPercentage(meal.originalPrice, meal.price);
+  const imageAsset = getMealImage(meal.imageKey);
 
   return (
     <div
-      className={`
-        flex flex-col rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]
-        overflow-hidden transition-all duration-300 group hover:shadow-[var(--card-hover-shadow)]
-        hover:border-[var(--border-hover)]
-        ${!meal.isAvailable ? 'opacity-70 grayscale-[35%]' : ''}
-      `}
+      className={`group relative flex flex-col rounded-2xl bg-[#0b101b] border transition-all duration-200 shadow-lg ${
+        meal.isAvailable
+          ? 'border-slate-800 hover:border-amber-500/40 hover:shadow-amber-500/5'
+          : 'border-slate-800/60 opacity-75 grayscale-[30%]'
+      }`}
     >
-      {/* Card Image Banner & Badges */}
-      <div className="relative w-full h-48 bg-slate-950 overflow-hidden shrink-0">
+      {/* Dish Visual Header */}
+      <div className="relative h-44 w-full bg-slate-900 rounded-t-2xl overflow-hidden">
         <img
-          src={imageSrc}
-          alt={language === 'ar' ? meal.nameAr : meal.nameEn}
+          src={imageAsset.webp || imageAsset.src}
+          alt={meal.nameAr}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b101b] via-transparent to-black/40" />
 
-        {/* Dietary & Status Badges (Top) */}
-        <div className="absolute top-3 start-3 end-3 flex items-start justify-between gap-2 pointer-events-none">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {meal.isSignature && (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-md">
-                <Sparkles className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'توقيع الشيف' : 'Signature'}
-              </span>
-            )}
-            {meal.isBestseller && (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-600 text-white shadow-md">
-                <Award className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'الأكثر طلباً' : 'Bestseller'}
-              </span>
-            )}
-            {meal.isSpicy && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-orange-600 text-white shadow-md">
-                <Flame className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'حار' : 'Spicy'}
-              </span>
-            )}
-            {meal.isVegetarian && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-md">
-                <Leaf className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'نباتي' : 'Veg'}
-              </span>
-            )}
-          </div>
+        {/* Top Badges */}
+        <div className="absolute top-4 start-4 flex flex-wrap gap-2 z-10">
+          {discountPercent > 0 && (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white shadow-sm font-mono">
+              خصم {discountPercent}%
+            </span>
+          )}
+          {meal.isSignature && (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950 flex items-center gap-1 shadow-sm">
+              <Crown className="w-3.5 h-3.5" />
+              <span>توقيع الشيف</span>
+            </span>
+          )}
+          {meal.isBestseller && (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-600 text-white flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>الأكثر طلباً</span>
+            </span>
+          )}
+        </div>
 
-          {/* Quick Availability Badge */}
-          <span
-            className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-md shrink-0 ${
+        {/* Availability Quick Switch in Top End Corner */}
+        <div className="absolute top-4 end-4 z-10">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleAvailability(meal.id);
+            }}
+            title={meal.isAvailable ? 'تعطيل التوفر مؤقتاً' : 'تفعيل التوفر للطلب'}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-md transition-all shadow-sm ${
               meal.isAvailable
-                ? 'bg-emerald-500/90 text-black backdrop-blur-sm'
-                : 'bg-rose-500/90 text-white backdrop-blur-sm'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                : 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
             }`}
           >
             {meal.isAvailable ? (
               <>
-                <CheckCircle2 className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'متوفر' : 'In Stock'}
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>متوفر</span>
               </>
             ) : (
               <>
-                <XCircle className="w-3 h-3 stroke-[2.5]" />
-                {language === 'ar' ? 'غير متوفر' : 'Out of Stock'}
+                <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                <span>غير متوفر</span>
               </>
             )}
-          </span>
+          </button>
         </div>
 
-        {/* Category & Prep Time (Bottom overlay) */}
-        <div className="absolute bottom-3 start-3 end-3 flex items-center justify-between text-xs text-white/90">
-          {categoryName && (
-            <span className="px-2.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/15 font-medium">
-              {categoryName}
+        {/* Category Chip */}
+        {category && (
+          <div className="absolute bottom-3 start-4 z-10">
+            <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-black/70 text-slate-200 backdrop-blur-md border border-white/10 shadow-sm">
+              {category.icon || '🍽️'} {category.nameAr}
             </span>
-          )}
-
-          {meal.prepTimeMinutes && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/15 text-[11px]">
-              <Clock className="w-3 h-3 text-[var(--accent-gold)]" />
-              <span>{meal.prepTimeMinutes} {language === 'ar' ? 'دقيقة' : 'mins'}</span>
-            </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Card Content Body */}
-      <div className="flex-1 flex flex-col p-4">
-        {/* Name & Pricing */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-base font-bold text-[var(--text-primary)] tracking-tight line-clamp-1 font-['Cairo',sans-serif]">
-            {language === 'ar' ? meal.nameAr : meal.nameEn}
-          </h3>
-          <div className="flex flex-col items-end shrink-0">
-            <span className="text-base font-black text-[var(--accent-gold)] font-mono">
-              {formattedPrice} <span className="text-[11px] font-normal">{language === 'ar' ? 'ل.س' : 'SP'}</span>
-            </span>
-            {formattedOriginal && (
-              <span className="text-[11px] line-through text-[var(--text-muted)] font-mono">
-                {formattedOriginal} {language === 'ar' ? 'ل.س' : 'SP'}
+      {/* Dish Body Details */}
+      <div className="px-5 sm:px-6 pt-4.5 pb-5 flex-1 flex flex-col justify-between space-y-4">
+        <div>
+          <div className="flex items-start justify-between gap-2.5">
+            <div>
+              <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-1">
+                {meal.nameAr}
+              </h3>
+              <p className="text-[11px] text-slate-400 font-mono line-clamp-1 mt-0.5">
+                {meal.nameEn}
+              </p>
+            </div>
+
+            {/* Preparation Time */}
+            {meal.prepTimeMinutes && (
+              <span className="shrink-0 flex items-center gap-1 text-xs text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>{meal.prepTimeMinutes} د</span>
+              </span>
+            )}
+          </div>
+
+          {meal.descriptionAr && (
+            <p className="text-xs text-slate-400 line-clamp-2 mt-2 leading-relaxed">
+              {meal.descriptionAr}
+            </p>
+          )}
+
+          {/* Dietary Flags */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {meal.isSpicy && (
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                <span>حار</span>
+              </span>
+            )}
+            {meal.isVegetarian && (
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <Leaf className="w-3 h-3" />
+                <span>نباتي</span>
+              </span>
+            )}
+            {meal.isNew && (
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                جديد
+              </span>
+            )}
+            {meal.options && meal.options.length > 0 && (
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-900 border border-slate-800 text-slate-400">
+                {meal.options.length} إضافات/أحجام
               </span>
             )}
           </div>
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-[var(--text-muted)] line-clamp-2 leading-relaxed mb-4 flex-1">
-          {language === 'ar' ? meal.descriptionAr : meal.descriptionEn}
-        </p>
-
-        {/* Options & Ingredients Indicators */}
-        <div className="flex items-center gap-2 mb-4 pt-2 border-t border-[var(--border-subtle)]/60 text-[11px] text-[var(--text-secondary)]">
-          {meal.options && meal.options.length > 0 && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
-              <Layers className="w-3 h-3 text-[var(--accent-gold)]" />
-              <span>{meal.options.length} {language === 'ar' ? 'خيارات' : 'options'}</span>
+        {/* Price & Action Buttons Footer */}
+        <div className="pt-3.5 border-t border-slate-800/80 flex items-center justify-between gap-3">
+          {/* Prices */}
+          <div className="flex flex-col">
+            <span className="text-base font-extrabold text-amber-400 font-mono">
+              {formatCurrencySYP(meal.price)}
             </span>
-          )}
+            {meal.originalPrice && meal.originalPrice > meal.price && (
+              <span className="text-[11px] text-slate-500 line-through font-mono">
+                {formatCurrencySYP(meal.originalPrice)}
+              </span>
+            )}
+          </div>
 
-          {meal.ingredientsAr && meal.ingredientsAr.length > 0 && (
-            <span className="truncate text-[var(--text-muted)]">
-              {language === 'ar' ? meal.ingredientsAr.slice(0, 3).join(' • ') : meal.ingredientsEn.slice(0, 3).join(' • ')}
-            </span>
-          )}
-        </div>
-
-        {/* Card Controls & Actions Footer */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-[var(--border-subtle)]">
-          {/* Availability Toggle Switch */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={meal.isAvailable}
-              onChange={() => onToggleAvailability(meal.id)}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 relative" />
-            <span className="text-xs font-semibold text-[var(--text-secondary)]">
-              {meal.isAvailable ? (language === 'ar' ? 'متاح' : 'Available') : (language === 'ar' ? 'معطل' : 'Disabled')}
-            </span>
-          </label>
-
-          {/* Action Buttons: Edit, Duplicate & Delete */}
+          {/* Action Icons */}
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => onEdit(meal)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--accent-gold)] hover:border-[var(--accent-gold)] transition-colors cursor-pointer"
-              title={language === 'ar' ? 'تعديل الوجبة' : 'Edit meal'}
+              onClick={() => onDuplicate(meal)}
+              title="نسخ وتكرار الوجبة"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-colors"
             >
-              <Edit3 className="w-4 h-4" />
+              <Copy className="w-3.5 h-3.5" />
             </button>
-
-            {onDuplicate && (
-              <button
-                type="button"
-                onClick={() => onDuplicate(meal)}
-                className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-sky-400 hover:border-sky-500/40 transition-colors cursor-pointer"
-                title={language === 'ar' ? 'نسخ الصنف (تكرار)' : 'Duplicate dish'}
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-            )}
-
+            <button
+              type="button"
+              onClick={() => onEdit(meal)}
+              title="تعديل الوجبة"
+              className="p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-colors"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
             <button
               type="button"
               onClick={() => onDelete(meal.id)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:text-rose-400 hover:border-rose-500/40 transition-colors cursor-pointer"
-              title={language === 'ar' ? 'حذف الوجبة' : 'Delete meal'}
+              title="حذف الوجبة"
+              className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-colors"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

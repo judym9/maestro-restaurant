@@ -1,15 +1,17 @@
-import React, { type ComponentType } from 'react';
-import type { LucideProps } from 'lucide-react';
+import React from 'react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: ComponentType<LucideProps>;
-  accentColor?: 'gold' | 'emerald' | 'crimson' | 'blue';
-  trendText?: string;
-  trendPositive?: boolean;
+  icon: LucideIcon;
+  badge?: {
+    text: string;
+    variant: 'success' | 'warning' | 'info' | 'danger' | 'gold';
+  };
   onClick?: () => void;
+  className?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -17,60 +19,55 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value,
   subtitle,
   icon: Icon,
-  accentColor = 'gold',
-  trendText,
-  trendPositive,
+  badge,
   onClick,
+  className = '',
 }) => {
-  const accentClasses = {
-    gold: 'text-[var(--brand-accent,var(--accent-gold))]',
-    emerald: 'text-emerald-400',
-    crimson: 'text-rose-400',
-    blue: 'text-sky-400',
-  }[accentColor] || 'text-[var(--brand-accent,var(--accent-gold))]';
+  const badgeClasses = {
+    success: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    warning: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    danger: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+    info: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    gold: 'bg-amber-400/20 text-amber-300 border-amber-400/40',
+  }[badge?.variant || 'info'];
 
   return (
     <div
       onClick={onClick}
-      className={`
-        relative flex items-center justify-between p-4 sm:p-5 rounded-2xl
-        bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden
-        transition-all duration-200 hover:border-white/20 w-full min-w-0 text-start group shadow-sm
-        ${onClick ? 'cursor-pointer hover:bg-white/[0.08] active:scale-[0.99]' : ''}
-      `}
+      className={`relative px-5 sm:px-6 py-5 sm:py-6 rounded-2xl bg-[#0b101b] border border-slate-800/80 shadow-lg shadow-black/20 hover:border-slate-700 transition-all duration-200 ${
+        onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-xl' : ''
+      } ${className}`}
     >
-      <div className="flex flex-col gap-1 min-w-0 flex-1 text-start me-3">
-        <span className="text-xs sm:text-sm font-medium text-[var(--text-muted)] opacity-70 truncate">
-          {title}
-        </span>
-        <span className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--text-primary)] font-mono truncate">
-          {value}
-        </span>
-        {(subtitle || trendText) && (
-          <div className="flex items-center gap-2 mt-0.5 min-w-0">
-            {subtitle && (
-              <span className="text-xs text-[var(--text-muted)] opacity-50 truncate flex-1">
-                {subtitle}
-              </span>
-            )}
-            {trendText && (
+      {/* Ambient background glow */}
+      <div className="absolute top-2 end-2 w-20 h-20 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
+
+      <div className="flex items-start justify-between gap-3.5">
+        <div className="space-y-1.5 min-w-0">
+          <span className="text-xs font-medium text-slate-400 block truncate">
+            {title}
+          </span>
+          <div className="flex items-baseline gap-2.5">
+            <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
+              {value}
+            </span>
+            {badge && (
               <span
-                dir="ltr"
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border shrink-0 ${
-                  trendPositive
-                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
-                    : 'bg-rose-500/15 text-rose-400 border-rose-500/20'
-                }`}
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClasses}`}
               >
-                {trendText}
+                {badge.text}
               </span>
             )}
           </div>
-        )}
-      </div>
+          {subtitle && (
+            <p className="text-[11px] text-slate-500 truncate pt-0.5">
+              {subtitle}
+            </p>
+          )}
+        </div>
 
-      <div className="p-3 rounded-xl bg-white/10 shrink-0 flex items-center justify-center transition-transform duration-200 group-hover:scale-105 border border-white/5">
-        <Icon className={`w-6 h-6 stroke-[2] ${accentClasses}`} />
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0 shadow-sm">
+          <Icon className="w-5 h-5" />
+        </div>
       </div>
     </div>
   );

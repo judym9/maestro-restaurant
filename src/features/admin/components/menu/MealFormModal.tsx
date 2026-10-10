@@ -1,168 +1,151 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Image as ImageIcon, Sparkles, AlertCircle } from 'lucide-react';
-import { useLanguage } from '../../../../app/providers/LanguageProvider';
-import type { AdminMealItem, CategoryItem, MealFormData, MealOption } from '../../types/menu.types';
-import { getMealImage } from '../../../../utils/imageRegistry';
+import {
+  Save,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  AlertCircle,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
+import { Modal } from '../common/Modal';
+import type { AdminMealItem, MealFormData, MealOption, CategoryItem } from '../../types/menu.types';
+import { calculateDiscountPercentage } from '../../utils/mathCalculations';
+import { MealAssets } from '../../../../utils/imageRegistry';
 
 export interface MealFormModalProps {
   isOpen: boolean;
-  categories: CategoryItem[];
-  editingMeal: AdminMealItem | null;
   onClose: () => void;
   onSave: (data: MealFormData) => void;
+  meal?: AdminMealItem | null;
+  categories: CategoryItem[];
 }
 
-const PRESET_IMAGE_KEYS = [
-  'shawarma-tower',
-  'shawarma-cake',
-  'shawarma-platters',
-  'shawarma-spit',
-  'broasted-pieces',
-  'broasted-chips',
-  'supreme-meal',
-  'crispy-meal',
-  'fajita-sub',
-  'crispy-baguettes',
-];
+const AVAILABLE_IMAGES = Object.keys(MealAssets) as (keyof typeof MealAssets)[];
 
 export const MealFormModal: React.FC<MealFormModalProps> = ({
   isOpen,
-  categories,
-  editingMeal,
   onClose,
   onSave,
+  meal,
+  categories,
 }) => {
-  const { language } = useLanguage();
-
   // Form State
   const [nameAr, setNameAr] = useState('');
   const [nameEn, setNameEn] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [descriptionAr, setDescriptionAr] = useState('');
   const [descriptionEn, setDescriptionEn] = useState('');
-  const [price, setPrice] = useState<number | ''>('');
-  const [originalPrice, setOriginalPrice] = useState<number | ''>('');
-  const [prepTimeMinutes, setPrepTimeMinutes] = useState<number | ''>(15);
-  const [imageKey, setImageKey] = useState('shawarma-tower');
+  const [price, setPrice] = useState<number>(0);
+  const [originalPrice, setOriginalPrice] = useState<number | undefined>(undefined);
+  const [prepTimeMinutes, setPrepTimeMinutes] = useState<number>(15);
+  const [imageKey, setImageKey] = useState<string>('shawarma-tower');
 
-  // Dietary tags
-  const [isSignature, setIsSignature] = useState(false);
-  const [isBestseller, setIsBestseller] = useState(false);
-  const [isSpicy, setIsSpicy] = useState(false);
-  const [isNew, setIsNew] = useState(false);
-  const [isVegetarian, setIsVegetarian] = useState(false);
-  const [isGlutenFree, setIsGlutenFree] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(true);
+  // Dietary and Marketing Flags
+  const [isAvailable, setIsAvailable] = useState<boolean>(true);
+  const [isSignature, setIsSignature] = useState<boolean>(false);
+  const [isBestseller, setIsBestseller] = useState<boolean>(false);
+  const [isSpicy, setIsSpicy] = useState<boolean>(false);
+  const [isNew, setIsNew] = useState<boolean>(false);
+  const [isVegetarian, setIsVegetarian] = useState<boolean>(false);
+  const [isGlutenFree, setIsGlutenFree] = useState<boolean>(false);
 
-  // Ingredients text
-  const [ingredientsArText, setIngredientsArText] = useState('');
-  const [ingredientsEnText, setIngredientsEnText] = useState('');
-
-  // Options & Add-ons
+  // Ingredients and Options
+  const [ingredientsArInput, setIngredientsArInput] = useState('');
+  const [ingredientsEnInput, setIngredientsEnInput] = useState('');
   const [options, setOptions] = useState<MealOption[]>([]);
 
-  // Validation
+  // Errors state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Reset or fill data when modal opens
+  // Reset or Populate form on open/change
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (editingMeal) {
-      setNameAr(editingMeal.nameAr);
-      setNameEn(editingMeal.nameEn);
-      setCategoryId(editingMeal.categoryId);
-      setDescriptionAr(editingMeal.descriptionAr);
-      setDescriptionEn(editingMeal.descriptionEn);
-      setPrice(editingMeal.price);
-      setOriginalPrice(editingMeal.originalPrice || '');
-      setPrepTimeMinutes(editingMeal.prepTimeMinutes || 15);
-      setImageKey(editingMeal.imageKey);
-      setIsSignature(editingMeal.isSignature);
-      setIsBestseller(editingMeal.isBestseller);
-      setIsSpicy(editingMeal.isSpicy);
-      setIsNew(editingMeal.isNew);
-      setIsVegetarian(Boolean(editingMeal.isVegetarian));
-      setIsGlutenFree(Boolean(editingMeal.isGlutenFree));
-      setIsAvailable(editingMeal.isAvailable);
-      setIngredientsArText(editingMeal.ingredientsAr ? editingMeal.ingredientsAr.join(', ') : '');
-      setIngredientsEnText(editingMeal.ingredientsEn ? editingMeal.ingredientsEn.join(', ') : '');
-      setOptions(editingMeal.options ? [...editingMeal.options] : []);
+    if (meal) {
+      setNameAr(meal.nameAr || '');
+      setNameEn(meal.nameEn || '');
+      setCategoryId(meal.categoryId || (categories[0]?.id ?? ''));
+      setDescriptionAr(meal.descriptionAr || '');
+      setDescriptionEn(meal.descriptionEn || '');
+      setPrice(meal.price || 0);
+      setOriginalPrice(meal.originalPrice);
+      setPrepTimeMinutes(meal.prepTimeMinutes || 15);
+      setImageKey(meal.imageKey || 'shawarma-tower');
+      setIsAvailable(meal.isAvailable ?? true);
+      setIsSignature(meal.isSignature || false);
+      setIsBestseller(meal.isBestseller || false);
+      setIsSpicy(meal.isSpicy || false);
+      setIsNew(meal.isNew || false);
+      setIsVegetarian(meal.isVegetarian || false);
+      setIsGlutenFree(meal.isGlutenFree || false);
+      setIngredientsArInput(meal.ingredientsAr?.join(', ') || '');
+      setIngredientsEnInput(meal.ingredientsEn?.join(', ') || '');
+      setOptions(meal.options ? [...meal.options] : []);
     } else {
       setNameAr('');
       setNameEn('');
-      setCategoryId(categories[0]?.id || 'cat-shawarma');
+      setCategoryId(categories[0]?.id || '');
       setDescriptionAr('');
       setDescriptionEn('');
-      setPrice('');
-      setOriginalPrice('');
+      setPrice(0);
+      setOriginalPrice(undefined);
       setPrepTimeMinutes(15);
       setImageKey('shawarma-tower');
+      setIsAvailable(true);
       setIsSignature(false);
       setIsBestseller(false);
       setIsSpicy(false);
       setIsNew(true);
       setIsVegetarian(false);
       setIsGlutenFree(false);
-      setIsAvailable(true);
-      setIngredientsArText('');
-      setIngredientsEnText('');
+      setIngredientsArInput('');
+      setIngredientsEnInput('');
       setOptions([]);
     }
     setErrors({});
-  }, [isOpen, editingMeal, categories]);
+  }, [meal, categories, isOpen]);
 
-  // Handle ESC key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+  // Options Handlers
+  const handleAddOption = () => {
+    const newOpt: MealOption = {
+      id: `opt-${Date.now()}`,
+      nameAr: '',
+      nameEn: '',
+      priceDiff: 0,
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  // Options management
-  const addOption = () => {
-    setOptions((prev) => [
-      ...prev,
-      {
-        id: `opt-${Date.now()}`,
-        nameAr: '',
-        nameEn: '',
-        priceDiff: 0,
-      },
-    ]);
+    setOptions((prev) => [...prev, newOpt]);
   };
 
-  const removeOption = (index: number) => {
-    setOptions((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateOption = (index: number, field: keyof MealOption, val: any) => {
+  const handleUpdateOption = (index: number, field: keyof MealOption, value: any) => {
     setOptions((prev) => {
       const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: val };
+      copy[index] = { ...copy[index], [field]: value };
       return copy;
     });
   };
 
+  const handleRemoveOption = (index: number) => {
+    setOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Submit Handler with Validation
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
     if (!nameAr.trim()) {
-      newErrors.nameAr = language === 'ar' ? 'اسم الوجبة بالعربية مطلوب' : 'Arabic name is required';
+      newErrors.nameAr = 'اسم الوجبة بالعربية مطلوب';
     }
     if (!nameEn.trim()) {
-      newErrors.nameEn = language === 'ar' ? 'اسم الوجبة بالإنجليزية مطلوب' : 'English name is required';
+      newErrors.nameEn = 'اسم الوجبة بالإنجليزية مطلوب';
     }
     if (!categoryId) {
-      newErrors.categoryId = language === 'ar' ? 'يرجى اختيار تصنيف الوجبة' : 'Category is required';
+      newErrors.categoryId = 'يرجى اختيار تصنيف الوجبة';
     }
-    if (price === '' || Number(price) <= 0) {
-      newErrors.price = language === 'ar' ? 'يرجى إدخال سعر صحيح أكبر من الصفر' : 'Valid price is required';
+    if (!price || price <= 0) {
+      newErrors.price = 'يرجى إدخال سعر صحيح أكبر من الصفر';
+    }
+    if (originalPrice && originalPrice < price) {
+      newErrors.originalPrice = 'السعر الأصلي يجب أن يكون مساوياً أو أكبر من سعر البيع';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -171,470 +154,449 @@ export const MealFormModal: React.FC<MealFormModalProps> = ({
     }
 
     const payload: MealFormData = {
-      id: editingMeal ? editingMeal.id : undefined,
+      ...(meal?.id ? { id: meal.id } : {}),
       nameAr: nameAr.trim(),
       nameEn: nameEn.trim(),
       categoryId,
       descriptionAr: descriptionAr.trim(),
       descriptionEn: descriptionEn.trim(),
       price: Number(price),
-      originalPrice: originalPrice !== '' ? Number(originalPrice) : undefined,
-      prepTimeMinutes: prepTimeMinutes !== '' ? Number(prepTimeMinutes) : 15,
+      originalPrice: originalPrice ? Number(originalPrice) : undefined,
+      prepTimeMinutes: Number(prepTimeMinutes) || 15,
       imageKey,
+      isAvailable,
       isSignature,
       isBestseller,
       isSpicy,
       isNew,
       isVegetarian,
       isGlutenFree,
-      isAvailable,
-      ingredientsArText,
-      ingredientsEnText,
-      options: options.filter((o) => o.nameAr.trim() || o.nameEn.trim()),
+      ingredientsArText: ingredientsArInput.trim(),
+      ingredientsEnText: ingredientsEnInput.trim(),
+      options: options.filter((opt) => opt.nameAr.trim() !== ''),
     };
 
     onSave(payload);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  const discountPercent = calculateDiscountPercentage(originalPrice, price);
 
-      {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] shadow-2xl z-10 overflow-hidden animate-scale-up">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] font-['Cairo',sans-serif]">
-                {editingMeal
-                  ? language === 'ar'
-                    ? 'تعديل بيانات الوجبة'
-                    : 'Edit Dish Details'
-                  : language === 'ar'
-                  ? 'إضافة وجبة ملكية جديدة'
-                  : 'Add New Royal Dish'}
-              </h2>
-              <p className="text-xs text-[var(--text-muted)]">
-                {language === 'ar' ? 'تحكم بالأسعار، الوصف، الخيارات والصور' : 'Manage pricing, descriptions, options & imagery'}
-              </p>
-            </div>
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={meal ? 'تعديل تفاصيل الوجبة الملكية' : 'إضافة وجبة ملكية جديدة'}
+      subtitle="أدخل البيانات بدقة لتحديث قائمة طعام المطعم والمتجر الفوري"
+      maxWidth="3xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Names */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              اسم الوجبة بالعربية <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={nameAr}
+              onChange={(e) => setNameAr(e.target.value)}
+              placeholder="مثال: شاورما عربي دبل مايسترو"
+              className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-sm text-white focus:outline-none focus:ring-1 transition-colors ${
+                errors.nameAr
+                  ? 'border-rose-500 focus:ring-rose-500'
+                  : 'border-slate-700/80 focus:border-amber-500 focus:ring-amber-500'
+              }`}
+            />
+            {errors.nameAr && (
+              <span className="text-[11px] text-rose-400 mt-1 block flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.nameAr}
+              </span>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-elevated)] transition-colors"
-            aria-label="Close dialog"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              اسم الوجبة بالإنجليزية <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
+              placeholder="e.g. Double Arabi Shawarma"
+              className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border text-sm text-white focus:outline-none focus:ring-1 transition-colors ${
+                errors.nameEn
+                  ? 'border-rose-500 focus:ring-rose-500'
+                  : 'border-slate-700/80 focus:border-amber-500 focus:ring-amber-500'
+              }`}
+            />
+            {errors.nameEn && (
+              <span className="text-[11px] text-rose-400 mt-1 block flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.nameEn}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-          {/* Section 1: Names & Category */}
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Name AR */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[var(--text-secondary)]">
-                  {language === 'ar' ? 'اسم الوجبة (بالعربية) *' : 'Dish Name (Arabic) *'}
-                </label>
-                <input
-                  type="text"
-                  value={nameAr}
-                  onChange={(e) => setNameAr(e.target.value)}
-                  placeholder="مثال: شاورما عربي سوبر"
-                  className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] transition-all ${
-                    errors.nameAr ? 'border-rose-500' : 'border-[var(--border-subtle)]'
-                  }`}
-                  dir="rtl"
-                />
-                {errors.nameAr && (
-                  <span className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> {errors.nameAr}
-                  </span>
-                )}
-              </div>
-
-              {/* Name EN */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[var(--text-secondary)]">
-                  {language === 'ar' ? 'اسم الوجبة (بالإنجليزية) *' : 'Dish Name (English) *'}
-                </label>
-                <input
-                  type="text"
-                  value={nameEn}
-                  onChange={(e) => setNameEn(e.target.value)}
-                  placeholder="e.g. Super Arabic Shawarma"
-                  className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] transition-all ${
-                    errors.nameEn ? 'border-rose-500' : 'border-[var(--border-subtle)]'
-                  }`}
-                  dir="ltr"
-                />
-                {errors.nameEn && (
-                  <span className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> {errors.nameEn}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Category Select */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'التصنيف / الفئة *' : 'Category *'}
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nameAr} — ({cat.nameEn})
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Category & Preparation Time */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              التصنيف والقسم <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.icon || '🍽️'} {cat.nameAr}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Section 2: Pricing & Prep Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-            {/* Price */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'السعر الحالي (ل.س) *' : 'Selling Price (SP) *'}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              مدة التحضير (بالدقائق)
+            </label>
+            <div className="relative">
+              <Clock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="number"
+                min="1"
+                value={prepTimeMinutes}
+                onChange={(e) => setPrepTimeMinutes(Number(e.target.value))}
+                className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Pricing: Sale Price & Original Price */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#090d16] border border-slate-800 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                سعر البيع الحالي (ليرة سورية) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
                 min="0"
                 step="500"
                 value={price}
-                onChange={(e) => setPrice(e.target.value ? Number(e.target.value) : '')}
-                placeholder="45000"
-                className={`px-3.5 py-2.5 rounded-xl text-sm border bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none focus:ring-2 focus:ring-[var(--accent-gold)] ${
-                  errors.price ? 'border-rose-500' : 'border-[var(--border-subtle)]'
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className={`w-full px-4 py-2.5 rounded-xl bg-slate-900 border text-sm text-white font-mono focus:outline-none focus:ring-1 transition-colors ${
+                  errors.price
+                    ? 'border-rose-500 focus:ring-rose-500'
+                    : 'border-slate-700/80 focus:border-amber-500 focus:ring-amber-500'
                 }`}
               />
               {errors.price && (
-                <span className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> {errors.price}
+                <span className="text-[11px] text-rose-400 mt-1 block">
+                  {errors.price}
                 </span>
               )}
             </div>
 
-            {/* Original / Sale Price */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'السعر قبل الخصم (اختياري)' : 'Original Price (Optional)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                السعر الأصلي المشطوب قبل الخصم (اختياري)
               </label>
               <input
                 type="number"
                 min="0"
                 step="500"
-                value={originalPrice}
-                onChange={(e) => setOriginalPrice(e.target.value ? Number(e.target.value) : '')}
-                placeholder="50000"
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
+                value={originalPrice ?? ''}
+                onChange={(e) =>
+                  setOriginalPrice(e.target.value ? Number(e.target.value) : undefined)
+                }
+                placeholder="اتركه فارغاً إذا لم يوجد خصم"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white font-mono focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
               />
-            </div>
-
-            {/* Prep Time */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'وقت التحضير (بالدقائق)' : 'Prep Time (Mins)'}
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="120"
-                value={prepTimeMinutes}
-                onChange={(e) => setPrepTimeMinutes(e.target.value ? Number(e.target.value) : '')}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-              />
+              {errors.originalPrice && (
+                <span className="text-[11px] text-rose-400 mt-1 block">
+                  {errors.originalPrice}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Section 3: Descriptions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الوصف الترويجي (بالعربية)' : 'Arabic Description'}
-              </label>
-              <textarea
-                rows={3}
-                value={descriptionAr}
-                onChange={(e) => setDescriptionAr(e.target.value)}
-                placeholder="وصف شهي للمكونات وطريقة التقديم..."
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] resize-none"
-                dir="rtl"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الوصف الترويجي (بالإنجليزية)' : 'English Description'}
-              </label>
-              <textarea
-                rows={3}
-                value={descriptionEn}
-                onChange={(e) => setDescriptionEn(e.target.value)}
-                placeholder="Mouth-watering dish description..."
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] resize-none"
-                dir="ltr"
-              />
-            </div>
-          </div>
-
-          {/* Section 4: Dietary & Marketing Tags */}
-          <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-            <span className="text-xs font-bold text-[var(--text-primary)] mb-1">
-              {language === 'ar' ? 'الشارات الترويجية والغذائية' : 'Promotional & Dietary Badges'}
-            </span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isSignature}
-                  onChange={(e) => setIsSignature(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'توقيع الشيف (مميز)' : 'Chef Signature'}</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isBestseller}
-                  onChange={(e) => setIsBestseller(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'الأكثر طلباً (Bestseller)' : 'Bestseller'}</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isSpicy}
-                  onChange={(e) => setIsSpicy(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'حار سبايسي' : 'Hot & Spicy'}</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isVegetarian}
-                  onChange={(e) => setIsVegetarian(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'نباتي (Vegetarian)' : 'Vegetarian'}</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isGlutenFree}
-                  onChange={(e) => setIsGlutenFree(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'خالٍ من الغلوتين' : 'Gluten-Free'}</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isNew}
-                  onChange={(e) => setIsNew(e.target.checked)}
-                  className="rounded text-[var(--accent-gold)] focus:ring-[var(--accent-gold)]"
-                />
-                <span>{language === 'ar' ? 'صنف جديد (New)' : 'New Addition'}</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Section 5: Image Key Selection with Preview */}
-          <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-            <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-[var(--accent-gold)]" />
-              {language === 'ar' ? 'صورة الوجبة الفاخرة' : 'Dish Presentation Image'}
-            </span>
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)] shadow-inner">
-                <img
-                  src={imageKey.startsWith('http') || imageKey.startsWith('data:') ? imageKey : getMealImage(imageKey).src}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="flex-1 flex flex-col gap-2.5">
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-[var(--text-muted)]">
-                    {language === 'ar' ? 'رابط الصورة (URL مباشر أو Unsplash):' : 'Image URL (Direct link or Unsplash):'}
-                  </label>
-                  <input
-                    type="url"
-                    value={imageKey.startsWith('http') ? imageKey : ''}
-                    onChange={(e) => setImageKey(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="px-3 py-1.5 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-[var(--text-muted)]">
-                    {language === 'ar' ? 'أو اختر من مكتبة صور مايسترو المدمجة:' : 'Or pick from Maestro preset library:'}
-                  </label>
-                  <select
-                    value={imageKey.startsWith('http') ? '' : imageKey}
-                    onChange={(e) => {
-                      if (e.target.value) setImageKey(e.target.value);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                  >
-                    <option value="">{language === 'ar' ? '-- اختر صورة من المكتبة --' : '-- Choose preset asset --'}</option>
-                    {PRESET_IMAGE_KEYS.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 6: Options & Sizes Customization */}
-          <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--text-primary)]">
-                {language === 'ar' ? 'خيارات الأحجام والإضافات (Add-ons)' : 'Customization & Portions'}
+          {discountPercent > 0 && (
+            <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/20">
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>
+                سيظهر مؤشر خصم جذاب للعميل بنسبة{' '}
+                <strong className="font-mono font-bold">{discountPercent}%</strong>
               </span>
-              <button
-                type="button"
-                onClick={addOption}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/25 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                {language === 'ar' ? 'إضافة خيار' : 'Add Option'}
-              </button>
             </div>
+          )}
+        </div>
 
-            {options.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] italic py-1">
-                {language === 'ar' ? 'لا توجد خيارات مخصصة لهذه الوجبة حالياً.' : 'No customization options added yet.'}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {options.map((opt, idx) => (
-                  <div key={opt.id} className="flex items-center gap-2 p-2 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
-                    <input
-                      type="text"
-                      value={opt.nameAr}
-                      onChange={(e) => updateOption(idx, 'nameAr', e.target.value)}
-                      placeholder={language === 'ar' ? 'الاسم بالعربية (مثال: حجم كبير)' : 'Name (AR)'}
-                      className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-                    />
-                    <input
-                      type="text"
-                      value={opt.nameEn}
-                      onChange={(e) => updateOption(idx, 'nameEn', e.target.value)}
-                      placeholder={language === 'ar' ? 'الاسم بالإنجليزية (Large)' : 'Name (EN)'}
-                      className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-                    />
+        {/* Image Selection with Visual Grid */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <ImageIcon className="w-4 h-4 text-amber-500" />
+              <span>صورة الوجبة في المتجر</span>
+            </span>
+            <span className="text-slate-500 text-[11px]">انقر لاختيار الصورة</span>
+          </label>
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-40 overflow-y-auto p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            {AVAILABLE_IMAGES.map((key) => {
+              const asset = MealAssets[key];
+              const isSelected = imageKey === key;
+
+              return (
+                <button
+                  type="button"
+                  key={key}
+                  onClick={() => setImageKey(key)}
+                  className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                    isSelected
+                      ? 'border-amber-500 ring-2 ring-amber-500/40 scale-95 shadow-md'
+                      : 'border-slate-800 hover:border-slate-600 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={asset.webp || asset.src}
+                    alt={asset.altAr}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Descriptions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              وصف الوجبة بالعربية
+            </label>
+            <textarea
+              rows={2}
+              value={descriptionAr}
+              onChange={(e) => setDescriptionAr(e.target.value)}
+              placeholder="وصف تفصيلي للوجبة ومكوناتها المميزة..."
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              وصف الوجبة بالإنجليزية
+            </label>
+            <textarea
+              rows={2}
+              value={descriptionEn}
+              onChange={(e) => setDescriptionEn(e.target.value)}
+              placeholder="English description..."
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Dietary & Marketing Checkboxes */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#090d16] border border-slate-800 space-y-3.5">
+          <span className="block text-xs font-bold text-slate-300">
+            شارات التمييز والعلامات الغذائية
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 text-xs">
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isAvailable}
+                onChange={(e) => setIsAvailable(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>متاحة للطلب الآن</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isSignature}
+                onChange={(e) => setIsSignature(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>توقيع الشيف (Signature)</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isBestseller}
+                onChange={(e) => setIsBestseller(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>الأكثر مبيعاً</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isSpicy}
+                onChange={(e) => setIsSpicy(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>حار (Spicy)</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isNew}
+                onChange={(e) => setIsNew(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>صنف جديد</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isVegetarian}
+                onChange={(e) => setIsVegetarian(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>نباتي (Vegetarian)</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+              <input
+                type="checkbox"
+                checked={isGlutenFree}
+                onChange={(e) => setIsGlutenFree(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
+              />
+              <span>خالي من الغلوتين</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Ingredients Inputs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              المكونات بالعربية (مفصولة بفواصل)
+            </label>
+            <input
+              type="text"
+              value={ingredientsArInput}
+              onChange={(e) => setIngredientsArInput(e.target.value)}
+              placeholder="مثال: صدور دجاج، ثومية، مخلل، خبز صاج"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              المكونات بالإنجليزية (مفصولة بفواصل)
+            </label>
+            <input
+              type="text"
+              value={ingredientsEnInput}
+              onChange={(e) => setIngredientsEnInput(e.target.value)}
+              placeholder="Chicken breast, Garlic dip, Pickles, Saj bread"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Options / Sizes Sub-Editor */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#090d16] border border-slate-800 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-300">
+              خيارات الأحجام والإضافات الخاصة بالوجبة (Options)
+            </span>
+            <button
+              type="button"
+              onClick={handleAddOption}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>إضافة خيار</span>
+            </button>
+          </div>
+
+          {options.length === 0 ? (
+            <p className="text-[11px] text-slate-500 text-center py-2">
+              لا توجد خيارات مخصصة. الوجبة تباع بالسعر القياسي فقط.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {options.map((opt, idx) => (
+                <div
+                  key={opt.id || idx}
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-800"
+                >
+                  <input
+                    type="text"
+                    value={opt.nameAr}
+                    onChange={(e) => handleUpdateOption(idx, 'nameAr', e.target.value)}
+                    placeholder="اسم الخيار بالعربية (مثال: حجم كبير)"
+                    className="flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700/80 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={opt.nameEn}
+                    onChange={(e) => handleUpdateOption(idx, 'nameEn', e.target.value)}
+                    placeholder="English option name"
+                    className="flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-700/80 text-xs text-white"
+                  />
+                  <div className="w-32 flex items-center gap-1">
                     <input
                       type="number"
                       step="500"
                       value={opt.priceDiff}
-                      onChange={(e) => updateOption(idx, 'priceDiff', Number(e.target.value) || 0)}
-                      placeholder="فرق السعر"
-                      className="w-24 px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono outline-none"
+                      onChange={(e) =>
+                        handleUpdateOption(idx, 'priceDiff', Number(e.target.value))
+                      }
+                      placeholder="+ فارق السعر"
+                      className="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-700/80 text-xs text-amber-400 font-mono text-center"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeOption(idx)}
-                      className="p-1.5 text-rose-400 hover:text-rose-300 transition-colors"
-                      aria-label="Remove option"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Section 7: Ingredients tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'المكونات بالعربية (مفصولة بفاصلة)' : 'Ingredients (Arabic - comma separated)'}
-              </label>
-              <input
-                type="text"
-                value={ingredientsArText}
-                onChange={(e) => setIngredientsArText(e.target.value)}
-                placeholder="دجاج طازج، بهارات شامية، ثومية، مخلل..."
-                className="px-3.5 py-2.5 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="rtl"
-              />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveOption(idx)}
+                    className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                    title="حذف الخيار"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
+          )}
+        </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'المكونات بالإنجليزية (مفصولة بفاصلة)' : 'Ingredients (English - comma separated)'}
-              </label>
-              <input
-                type="text"
-                value={ingredientsEnText}
-                onChange={(e) => setIngredientsEnText(e.target.value)}
-                placeholder="Fresh chicken, Toum dip, Pickles..."
-                className="px-3.5 py-2.5 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="ltr"
-              />
-            </div>
-          </div>
-
-          {/* Modal Footer Controls */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] sticky bottom-0 bg-[var(--bg-surface-elevated)] pb-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-elevated)] transition-colors min-h-[42px]"
-            >
-              {language === 'ar' ? 'إلغاء' : 'Cancel'}
-            </button>
-
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-lg shadow-amber-900/20 transition-all min-h-[42px]"
-            >
-              {editingMeal
-                ? language === 'ar'
-                  ? 'حفظ التعديلات'
-                  : 'Save Changes'
-                : language === 'ar'
-                ? 'إضافة الوجبة'
-                : 'Create Dish'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Modal Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-5 pb-1 border-t border-slate-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
+          >
+            إلغاء
+          </button>
+          <button
+            type="submit"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all"
+          >
+            <Save className="w-4 h-4" />
+            <span>حفظ بيانات الوجبة</span>
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

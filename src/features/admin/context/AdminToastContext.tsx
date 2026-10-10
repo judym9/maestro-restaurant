@@ -42,7 +42,7 @@ export const AdminToastProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       {/* Floating Toast Container */}
       <aside
-        className={`fixed bottom-6 ${isRtl ? 'left-6' : 'right-6'} z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none`}
+        className={`fixed bottom-6 ${isRtl ? 'start-6' : 'end-6'} z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none`}
         aria-live="polite"
       >
         {toasts.map((toast) => {
@@ -53,7 +53,7 @@ export const AdminToastProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             <div
               key={toast.id}
               className={`
-                pointer-events-auto flex items-start gap-3 p-3.5 rounded-2xl border shadow-xl
+                pointer-events-auto flex items-start gap-3.5 p-4 px-4.5 rounded-2xl border shadow-xl
                 bg-[var(--bg-surface-elevated)] backdrop-blur-md transition-all duration-300
                 ${
                   isSuccess
@@ -73,7 +73,7 @@ export const AdminToastProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
               <div className="flex-1 min-w-0 flex flex-col">
                 {toast.title && (
-                  <span className="text-xs font-bold text-[var(--text-primary)] mb-0.5">
+                  <span className="text-xs font-bold text-[var(--text-primary)] mb-1">
                     {toast.title}
                   </span>
                 )}
@@ -85,7 +85,7 @@ export const AdminToastProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-lg transition-colors"
+                className="shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1.5 rounded-xl hover:bg-white/10 transition-colors"
                 aria-label="Dismiss toast"
               >
                 <X className="w-4 h-4" />

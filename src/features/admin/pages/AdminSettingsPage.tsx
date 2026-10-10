@@ -1,387 +1,313 @@
 import React, { useState } from 'react';
 import {
+  SlidersHorizontal,
   Store,
-  Clock,
   Phone,
+  Clock,
   Truck,
   Save,
-  AlertTriangle,
   RotateCcw,
   ExternalLink,
   MessageCircle,
+  AlertTriangle,
 } from 'lucide-react';
-import { useLanguage } from '../../../app/providers/LanguageProvider';
 import { useAdminSettings } from '../hooks/useAdminSettings';
 import { useAdminToast } from '../context/AdminToastContext';
+import { ScheduleEditor } from '../components/settings/ScheduleEditor';
 import type { BranchContactInfo, DaySchedule, OperatingSchedule } from '../types/settings.types';
+import { sanitizePhoneNumber } from '../utils/mathCalculations';
 
 type SettingsTab = 'identity' | 'contact' | 'schedule' | 'delivery';
 
 export const AdminSettingsPage: React.FC = () => {
-  const { language } = useLanguage();
   const { showToast } = useAdminToast();
-
   const {
     contactInfo,
     operatingSchedule,
     saveBranchInfo,
     saveSchedule,
-    toggleOpenStatus,
   } = useAdminSettings();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('identity');
 
-  // Local draft states
-  const [contactDraft, setContactDraft] = useState<BranchContactInfo>(contactInfo);
-  const [scheduleDraft, setScheduleDraft] = useState<OperatingSchedule>(operatingSchedule);
+  // Local draft state for contact info
+  const [draftContact, setDraftContact] = useState<BranchContactInfo>(() => ({
+    ...contactInfo,
+  }));
 
-  const handleContactChange = (field: keyof BranchContactInfo, value: string) => {
-    setContactDraft((prev) => ({ ...prev, [field]: value }));
+  // Local draft state for schedule
+  const [draftSchedule, setDraftSchedule] = useState<OperatingSchedule>(() => ({
+    ...operatingSchedule,
+    weeklySchedule: operatingSchedule.weeklySchedule || [],
+  }));
+
+  // Handle Input Changes for Contact Info
+  const handleContactChange = (field: keyof BranchContactInfo, value: any) => {
+    setDraftContact((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Handle Input Changes for Operating Schedule
   const handleScheduleChange = (field: keyof OperatingSchedule, value: any) => {
-    setScheduleDraft((prev) => ({ ...prev, [field]: value }));
+    setDraftSchedule((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDayChange = (dayId: string, field: keyof DaySchedule, value: any) => {
-    setScheduleDraft((prev) => {
-      const scheduleList = prev.weeklySchedule ? [...prev.weeklySchedule] : [];
-      const index = scheduleList.findIndex((d) => d.dayId === dayId);
-      if (index >= 0) {
-        scheduleList[index] = { ...scheduleList[index], [field]: value };
-      }
-      return { ...prev, weeklySchedule: scheduleList };
+  // Save All Handler
+  const handleSaveAll = () => {
+    saveBranchInfo(draftContact, 'تم حفظ بيانات الفرع بنجاح');
+    saveSchedule(draftSchedule, 'تم حفظ جدول الدوام الأسبوعي بنجاح');
+    showToast('success', 'تم حفظ كافة إعدادات المطعم والفرع بنجاح');
+  };
+
+  // Reset to Loaded State
+  const handleReset = () => {
+    setDraftContact({ ...contactInfo });
+    setDraftSchedule({
+      ...operatingSchedule,
+      weeklySchedule: operatingSchedule.weeklySchedule || [],
     });
-  };
-
-  const replicateScheduleToAllDays = (sourceDayId: string) => {
-    const sourceDay = scheduleDraft.weeklySchedule?.find((d) => d.dayId === sourceDayId);
-    if (!sourceDay) return;
-
-    setScheduleDraft((prev) => {
-      const scheduleList = prev.weeklySchedule?.map((d) => ({
-        ...d,
-        isOpen: sourceDay.isOpen,
-        openTime: sourceDay.openTime,
-        closeTime: sourceDay.closeTime,
-      }));
-      return { ...prev, weeklySchedule: scheduleList };
-    });
-
-    showToast(
-      'info',
-      language === 'ar'
-        ? `تم نسخ أوقات (${sourceDay.nameAr}) إلى كامل أيام الأسبوع`
-        : `Replicated ${sourceDay.nameEn} times across all days`
-    );
-  };
-
-  const handleSaveContact = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveBranchInfo(
-      contactDraft,
-      language === 'ar' ? 'تم حفظ بيانات وهوية المطعم بنجاح' : 'Restaurant profile saved successfully'
-    );
-    showToast('success', language === 'ar' ? 'تم تحديث معلومات المطعم بنجاح' : 'Restaurant details updated successfully');
-  };
-
-  const handleSaveSchedule = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveSchedule(
-      scheduleDraft,
-      language === 'ar' ? 'تم حفظ جدول ساعات العمل وقواعد التوصيل' : 'Operating schedule saved successfully'
-    );
-    showToast('success', language === 'ar' ? 'تم تحديث ساعات العمل وشروط التوصيل' : 'Schedule and delivery settings saved');
+    showToast('info', 'تمت استعادة الإعدادات الأصلية');
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight font-['Cairo',sans-serif]">
-            {language === 'ar' ? 'إعدادات الفرع وملف المطعم' : 'Restaurant Profile & Branch Settings'}
+          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <SlidersHorizontal className="w-6 h-6 text-amber-500" />
+            <span>إعدادات المطعم والفرع</span>
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1">
-            {language === 'ar'
-              ? 'التحكم بالهوية، أرقام التواصل، الدوام الأسبوعي، ومناطق التوصيل'
-              : 'Configure brand identity, contact channels, weekly working schedule & delivery rules'}
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            إدارة الهوية الرسمية، بيانات التواصل، الجدول الأسبوعي، وشروط التوصيل لفرع النبك
           </p>
         </div>
 
-        {/* Master Kitchen Quick Toggle */}
-        <div className="flex items-center gap-3 p-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <span className="text-xs font-bold text-[var(--text-primary)] ps-2">
-            {language === 'ar' ? 'حالة المطبخ الحالية:' : 'Kitchen Live State:'}
-          </span>
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={toggleOpenStatus}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              operatingSchedule.isOpen
-                ? 'bg-emerald-600 text-white shadow-emerald-900/20 shadow-md'
-                : 'bg-rose-600 text-white shadow-rose-900/20 shadow-md'
-            }`}
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors"
           >
-            {operatingSchedule.isOpen
-              ? language === 'ar'
-                ? 'المطبخ يعمل (مفتوح)'
-                : 'Kitchen Open'
-              : language === 'ar'
-              ? 'المطبخ متوقف (مغلق)'
-              : 'Kitchen Closed'}
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>استعادة</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
+          >
+            <Save className="w-4 h-4" />
+            <span>حفظ الإعدادات</span>
           </button>
         </div>
       </div>
 
-      {/* Tabs Bar */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setActiveTab('identity')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            activeTab === 'identity'
-              ? 'bg-[var(--accent-gold)] text-[var(--btn-primary-text)] shadow-sm'
-              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Store className="w-4 h-4" />
-          <span>{language === 'ar' ? 'الهوية والقصة' : 'Identity & Brand'}</span>
-        </button>
+      {/* Tabs Navigation */}
+      <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto pb-3 scrollbar-none">
+        {[
+          { id: 'identity', label: 'هوية المطعم والقصة', icon: Store },
+          { id: 'contact', label: 'الاتصال والموقع الجغرافي', icon: Phone },
+          { id: 'schedule', label: 'ساعات العمل الأسبوعية', icon: Clock },
+          { id: 'delivery', label: 'شروط التوصيل والطلب', icon: Truck },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('contact')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            activeTab === 'contact'
-              ? 'bg-[var(--accent-gold)] text-[var(--btn-primary-text)] shadow-sm'
-              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Phone className="w-4 h-4" />
-          <span>{language === 'ar' ? 'الاتصال والموقع' : 'Contacts & Location'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('schedule')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            activeTab === 'schedule'
-              ? 'bg-[var(--accent-gold)] text-[var(--btn-primary-text)] shadow-sm'
-              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          <span>{language === 'ar' ? 'الجدول الأسبوعي' : 'Weekly Schedule'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('delivery')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            activeTab === 'delivery'
-              ? 'bg-[var(--accent-gold)] text-[var(--btn-primary-text)] shadow-sm'
-              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Truck className="w-4 h-4" />
-          <span>{language === 'ar' ? 'شروط التوصيل' : 'Delivery Rules'}</span>
-        </button>
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as SettingsTab)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                isActive
+                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab 1: Identity & Story */}
+      {/* Tab 1: Restaurant Identity & Story */}
       {activeTab === 'identity' && (
-        <form onSubmit={handleSaveContact} className="flex flex-col gap-6 p-6 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-subtle)]">
-            <Store className="w-5 h-5 text-[var(--accent-gold)]" />
-            <h2 className="text-base font-bold text-[var(--text-primary)]">
-              {language === 'ar' ? 'الهوية العامة وتفاصيل العلامة التجارية' : 'Brand Identity & About Story'}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'اسم المطعم (بالعربية)' : 'Restaurant Name (Arabic)'}
+        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                اسم المطعم بالعربية
               </label>
               <input
                 type="text"
-                value={contactDraft.restaurantNameAr}
+                value={draftContact.restaurantNameAr}
                 onChange={(e) => handleContactChange('restaurantNameAr', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="rtl"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'اسم المطعم (بالإنجليزية)' : 'Restaurant Name (English)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                اسم المطعم بالإنجليزية
               </label>
               <input
                 type="text"
-                value={contactDraft.restaurantNameEn}
+                value={draftContact.restaurantNameEn}
                 onChange={(e) => handleContactChange('restaurantNameEn', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الشعار الترويجي (بالعربية)' : 'Tagline (Arabic)'}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                الشعار اللفظي الترويجي بالعربية (Tagline)
               </label>
               <input
                 type="text"
-                value={contactDraft.taglineAr || ''}
+                value={draftContact.taglineAr || ''}
                 onChange={(e) => handleContactChange('taglineAr', e.target.value)}
-                placeholder="سيمفونية المذاق الأصيل..."
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="rtl"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الشعار الترويجي (بالإنجليزية)' : 'Tagline (English)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                الشعار اللفظي بالإنجليزية
               </label>
               <input
                 type="text"
-                value={contactDraft.taglineEn || ''}
+                value={draftContact.taglineEn || ''}
                 onChange={(e) => handleContactChange('taglineEn', e.target.value)}
-                placeholder="The Symphony of Levantine Flavors..."
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)]"
-                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'قصة المطعم ومن نحن (بالعربية)' : 'About Story (Arabic)'}
+          {/* About Stories */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                قصة المطعم ونبذة "من نحن" بالعربية
               </label>
               <textarea
-                rows={3}
-                value={contactDraft.aboutStoryAr || ''}
+                rows={4}
+                value={draftContact.aboutStoryAr || ''}
                 onChange={(e) => handleContactChange('aboutStoryAr', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] resize-none"
-                dir="rtl"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white leading-relaxed focus:outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'قصة المطعم ومن نحن (بالإنجليزية)' : 'About Story (English)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                قصة المطعم بالإنجليزية
               </label>
               <textarea
-                rows={3}
-                value={contactDraft.aboutStoryEn || ''}
+                rows={4}
+                value={draftContact.aboutStoryEn || ''}
                 onChange={(e) => handleContactChange('aboutStoryEn', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent-gold)] resize-none"
-                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white leading-relaxed focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
-          {/* Social Channels */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">Instagram URL</label>
-              <input
-                type="url"
-                value={contactDraft.instagramUrl || ''}
-                onChange={(e) => handleContactChange('instagramUrl', e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">Facebook URL</label>
-              <input
-                type="url"
-                value={contactDraft.facebookUrl || ''}
-                onChange={(e) => handleContactChange('facebookUrl', e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">TikTok URL</label>
-              <input
-                type="url"
-                value={contactDraft.tiktokUrl || ''}
-                onChange={(e) => handleContactChange('tiktokUrl', e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
-            >
-              <Save className="w-4 h-4" />
-              <span>{language === 'ar' ? 'حفظ الهوية' : 'Save Identity'}</span>
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Tab 2: Contact & Location */}
-      {activeTab === 'contact' && (
-        <form onSubmit={handleSaveContact} className="flex flex-col gap-6 p-6 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-subtle)]">
-            <Phone className="w-5 h-5 text-[var(--accent-gold)]" />
-            <h2 className="text-base font-bold text-[var(--text-primary)]">
-              {language === 'ar' ? 'أرقام الاتصال وقنوات الطلب المباشر والموقع' : 'Contacts, Orders & Geographic Location'}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'هاتف الطلبات الرئيسي' : 'Primary Phone'}
-              </label>
-              <input
-                type="tel"
-                value={contactDraft.phonePrimary}
-                onChange={(e) => handleContactChange('phonePrimary', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'هاتف الاستفسارات البديل' : 'Secondary Phone'}
-              </label>
-              <input
-                type="tel"
-                value={contactDraft.phoneSecondary}
-                onChange={(e) => handleContactChange('phoneSecondary', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'رقم واتساب الطلبات' : 'WhatsApp Orders'}
-              </label>
-              <div className="relative">
+          {/* Social Links */}
+          <div className="pt-2 border-t border-slate-800 space-y-3.5">
+            <span className="block text-xs font-bold text-slate-300">
+              روابط منصات التواصل الاجتماعي الرسمية
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1.5">
+                  حساب Instagram
+                </label>
                 <input
                   type="text"
-                  value={contactDraft.whatsappNumber}
+                  value={draftContact.instagramUrl || ''}
+                  onChange={(e) => handleContactChange('instagramUrl', e.target.value)}
+                  placeholder="https://instagram.com/..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1.5">
+                  صفحة Facebook
+                </label>
+                <input
+                  type="text"
+                  value={draftContact.facebookUrl || ''}
+                  onChange={(e) => handleContactChange('facebookUrl', e.target.value)}
+                  placeholder="https://facebook.com/..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1.5">
+                  حساب TikTok
+                </label>
+                <input
+                  type="text"
+                  value={draftContact.tiktokUrl || ''}
+                  onChange={(e) => handleContactChange('tiktokUrl', e.target.value)}
+                  placeholder="https://tiktok.com/@..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Contact Info & Location */}
+      {activeTab === 'contact' && (
+        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                رقم هاتف الطلبات الأساسي
+              </label>
+              <input
+                type="text"
+                value={draftContact.phonePrimary}
+                onChange={(e) => handleContactChange('phonePrimary', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                رقم الهاتف الاحتياطي أو الأرضي
+              </label>
+              <input
+                type="text"
+                value={draftContact.phoneSecondary}
+                onChange={(e) => handleContactChange('phoneSecondary', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                رقم الواتساب لاستقبال الطلبات
+              </label>
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="text"
+                  value={draftContact.whatsappNumber}
                   onChange={(e) => handleContactChange('whatsappNumber', e.target.value)}
-                  className="w-full ps-3.5 pe-10 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
                 />
                 <a
-                  href={`https://wa.me/${contactDraft.whatsappNumber.replace(/[^0-9]/g, '')}`}
+                  href={`https://wa.me/${sanitizePhoneNumber(draftContact.whatsappNumber)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute top-1/2 -translate-y-1/2 end-3 text-emerald-400 hover:text-emerald-300"
-                  title="Test WhatsApp Link"
+                  className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 shrink-0 shadow-sm"
+                  title="اختبار فتح الواتساب"
                 >
                   <MessageCircle className="w-4 h-4" />
                 </a>
@@ -389,303 +315,210 @@ export const AdminSettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'العنوان الفعلي (بالعربية)' : 'Physical Address (Arabic)'}
+          {/* Detailed Addresses */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                العنوان التفصيلي للفرع بالعربية
               </label>
               <input
                 type="text"
-                value={contactDraft.addressAr}
+                value={draftContact.addressAr}
                 onChange={(e) => handleContactChange('addressAr', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none"
-                dir="rtl"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'العنوان الفعلي (بالإنجليزية)' : 'Physical Address (English)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                العنوان التفصيلي بالإنجليزية
               </label>
               <input
                 type="text"
-                value={contactDraft.addressEn}
+                value={draftContact.addressEn}
                 onChange={(e) => handleContactChange('addressEn', e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none"
-                dir="ltr"
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center justify-between">
-              <span>{language === 'ar' ? 'رابط خرائط غوغل (Google Maps URL)' : 'Google Maps Location URL'}</span>
-              {contactDraft.googleMapsUrl && (
+          {/* Google Maps URL */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
+              <span>رابط خرائط Google لموقع المطعم</span>
+              {draftContact.googleMapsUrl && (
                 <a
-                  href={contactDraft.googleMapsUrl}
+                  href={draftContact.googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] text-[var(--accent-gold)] flex items-center gap-1 hover:underline"
+                  className="text-amber-400 hover:underline flex items-center gap-1 text-[11px]"
                 >
+                  <span>معاينة الرابط</span>
                   <ExternalLink className="w-3 h-3" />
-                  <span>{language === 'ar' ? 'معاينة الموقع' : 'Preview Map'}</span>
                 </a>
               )}
             </label>
             <input
-              type="url"
-              value={contactDraft.googleMapsUrl}
+              type="text"
+              value={draftContact.googleMapsUrl}
               onChange={(e) => handleContactChange('googleMapsUrl', e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-amber-500"
             />
           </div>
-
-          <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
-            >
-              <Save className="w-4 h-4" />
-              <span>{language === 'ar' ? 'حفظ معلومات الاتصال' : 'Save Contacts'}</span>
-            </button>
-          </div>
-        </form>
+        </div>
       )}
 
-      {/* Tab 3: Weekly Schedule & Emergency Banner */}
+      {/* Tab 3: Weekly Schedule & Emergency Notice */}
       {activeTab === 'schedule' && (
-        <form onSubmit={handleSaveSchedule} className="flex flex-col gap-6 p-6 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[var(--accent-gold)]" />
-              <h2 className="text-base font-bold text-[var(--text-primary)]">
-                {language === 'ar' ? 'جدول ساعات الدوام الأسبوعية بالتفصيل' : 'Detailed Weekly Operating Schedule'}
-              </h2>
-            </div>
+        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+          {/* Emergency Announcement Banner */}
+          <div className="p-5 sm:p-5.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span>شريط التنبيهات الإدارية العاجلة في المتجر</span>
+              </span>
 
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
                 <input
                   type="checkbox"
-                  checked={scheduleDraft.is24HourFormat || false}
-                  onChange={(e) => handleScheduleChange('is24HourFormat', e.target.checked)}
-                  className="rounded text-[var(--accent-gold)]"
+                  checked={draftSchedule.showEmergencyBanner}
+                  onChange={(e) =>
+                    handleScheduleChange('showEmergencyBanner', e.target.checked)
+                  }
+                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500"
                 />
-                <span>{language === 'ar' ? 'نظام 24 ساعة' : '24h Time Format'}</span>
+                <span>تفعيل الشريط في أعلى الموقع</span>
               </label>
             </div>
-          </div>
 
-          {/* Days Table */}
-          <div className="flex flex-col gap-3">
-            {scheduleDraft.weeklySchedule?.map((day) => (
-              <div
-                key={day.dayId}
-                className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all gap-3 ${
-                  day.isOpen
-                    ? 'border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)]'
-                    : 'border-rose-500/20 bg-rose-500/5 opacity-60'
-                }`}
-              >
-                {/* Day Name & Toggle */}
-                <div className="flex items-center gap-3 min-w-[140px]">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={day.isOpen}
-                      onChange={(e) => handleDayChange(day.dayId, 'isOpen', e.target.checked)}
-                      className="rounded text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span className="text-sm font-bold text-[var(--text-primary)]">
-                      {language === 'ar' ? day.nameAr : day.nameEn}
-                    </span>
+            {draftSchedule.showEmergencyBanner && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1.5">
+                    نص التنبيه بالعربية
                   </label>
+                  <input
+                    type="text"
+                    value={draftSchedule.emergencyNoticeAr || ''}
+                    onChange={(e) =>
+                      handleScheduleChange('emergencyNoticeAr', e.target.value)
+                    }
+                    placeholder="مثال: يرجى العلم بوجود عطلة استثنائية يوم الجمعة القادم..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
                 </div>
 
-                {/* Times Pickers */}
-                {day.isOpen ? (
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]">
-                    <span>{language === 'ar' ? 'من:' : 'From:'}</span>
-                    <input
-                      type="time"
-                      value={day.openTime}
-                      onChange={(e) => handleDayChange(day.dayId, 'openTime', e.target.value)}
-                      className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono outline-none"
-                    />
-                    <span>{language === 'ar' ? 'إلى:' : 'To:'}</span>
-                    <input
-                      type="time"
-                      value={day.closeTime}
-                      onChange={(e) => handleDayChange(day.dayId, 'closeTime', e.target.value)}
-                      className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono outline-none"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-xs font-bold text-rose-400">
-                    {language === 'ar' ? 'عطلة أسبوعية (مغلق)' : 'Day Off (Closed)'}
-                  </span>
-                )}
-
-                {/* Replicate Button */}
-                {day.isOpen && (
-                  <button
-                    type="button"
-                    onClick={() => replicateScheduleToAllDays(day.dayId)}
-                    className="flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-gold)] hover:underline self-end sm:self-auto"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>{language === 'ar' ? 'نسخ لكافة الأيام' : 'Copy to all days'}</span>
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Emergency Announcement Banner Toggle */}
-          <div className="flex flex-col gap-3 p-4 rounded-2xl border border-amber-500/25 bg-amber-500/5 mt-2">
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={scheduleDraft.showEmergencyBanner}
-                  onChange={(e) => handleScheduleChange('showEmergencyBanner', e.target.checked)}
-                  className="rounded text-amber-500"
-                />
-                <span className="flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  {language === 'ar' ? 'تفعيل شريط التنبيهات الإدارية العاجلة في أعلى الموقع' : 'Enable Emergency Header Banner'}
-                </span>
-              </label>
-            </div>
-
-            {scheduleDraft.showEmergencyBanner && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                <input
-                  type="text"
-                  value={scheduleDraft.emergencyNoticeAr}
-                  onChange={(e) => handleScheduleChange('emergencyNoticeAr', e.target.value)}
-                  placeholder="نص التنبيه بالعربية (مثال: نعتذر عن استقبال الطلبات مؤقتاً بسبب أعمال الصيانة)..."
-                  className="px-3.5 py-2 rounded-xl text-xs border border-amber-500/30 bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-                  dir="rtl"
-                />
-                <input
-                  type="text"
-                  value={scheduleDraft.emergencyNoticeEn}
-                  onChange={(e) => handleScheduleChange('emergencyNoticeEn', e.target.value)}
-                  placeholder="Emergency notice in English..."
-                  className="px-3.5 py-2 rounded-xl text-xs border border-amber-500/30 bg-[var(--bg-surface)] text-[var(--text-primary)] outline-none"
-                  dir="ltr"
-                />
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1.5">
+                    نص التنبيه بالإنجليزية
+                  </label>
+                  <input
+                    type="text"
+                    value={draftSchedule.emergencyNoticeEn || ''}
+                    onChange={(e) =>
+                      handleScheduleChange('emergencyNoticeEn', e.target.value)
+                    }
+                    placeholder="English announcement..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
               </div>
             )}
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
-            >
-              <Save className="w-4 h-4" />
-              <span>{language === 'ar' ? 'حفظ جدول الدوام' : 'Save Weekly Schedule'}</span>
-            </button>
-          </div>
-        </form>
+          {/* 7-Day Operating Schedule Editor */}
+          <ScheduleEditor
+            schedule={draftSchedule.weeklySchedule || []}
+            onChange={(updatedDays: DaySchedule[]) =>
+              handleScheduleChange('weeklySchedule', updatedDays)
+            }
+          />
+        </div>
       )}
 
-      {/* Tab 4: Delivery Rules */}
+      {/* Tab 4: Delivery Terms & Min Order */}
       {activeTab === 'delivery' && (
-        <form onSubmit={handleSaveSchedule} className="flex flex-col gap-6 p-6 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <div className="flex items-center gap-2 pb-3 border-b border-[var(--border-subtle)]">
-            <Truck className="w-5 h-5 text-[var(--accent-gold)]" />
-            <h2 className="text-base font-bold text-[var(--text-primary)]">
-              {language === 'ar' ? 'معايير التوصيل السريع والحد الأدنى للطلبات' : 'Delivery Parameters & Minimum Order Values'}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'أجور التوصيل الافتراضية (ل.س)' : 'Delivery Fee (SP)'}
+        <div className="p-6 sm:p-8 px-6 sm:px-8 py-6 sm:py-8 rounded-2xl bg-[#0b101b] border border-slate-800 space-y-6 sm:space-y-7">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                أجور التوصيل الثابتة (ليرة سورية)
               </label>
               <input
                 type="number"
-                min="0"
-                step="500"
-                value={scheduleDraft.deliveryFee || 0}
-                onChange={(e) => handleScheduleChange('deliveryFee', Number(e.target.value) || 0)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
+                step="1000"
+                value={draftSchedule.minOrderAmount ? 15000 : 15000}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-amber-400 font-mono"
               />
+              <span className="text-[11px] text-slate-500 mt-1.5 block">
+                القيمة الافتراضية الثابتة لكافة أحياء النبك: 15,000 ل.س
+              </span>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الحد الأدنى لقيمة الطلب (ل.س)' : 'Minimum Order Amount (SP)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                الحد الأدنى لقيمة الطلب (ليرة سورية)
               </label>
               <input
                 type="number"
-                min="0"
-                step="500"
-                value={scheduleDraft.minOrderAmount || 0}
-                onChange={(e) => handleScheduleChange('minOrderAmount', Number(e.target.value) || 0)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
+                step="5000"
+                value={draftSchedule.minOrderAmount || 50000}
+                onChange={(e) =>
+                  handleScheduleChange('minOrderAmount', Number(e.target.value))
+                }
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
               />
+              <span className="text-[11px] text-slate-500 mt-1.5 block">
+                أقل مبلغ مسموح به لإتمام طلب التوصيل
+              </span>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'نسبة الضريبة / القيمة المضافة (%)' : 'VAT / Tax Rate (%)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                نسبة الضريبة / القيمة المضافة
               </label>
               <input
                 type="number"
                 min="0"
                 max="100"
-                value={scheduleDraft.taxRatePercent || 0}
-                onChange={(e) => handleScheduleChange('taxRatePercent', Number(e.target.value) || 0)}
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-mono outline-none"
+                value={0}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-slate-400 font-mono"
               />
+              <span className="text-[11px] text-slate-500 mt-1.5 block">
+                مضبوطة حالياً بنسبة 0%
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الوقت المتوقع للتوصيل (بالعربية)' : 'Estimated Delivery Time (Arabic)'}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 border-t border-slate-800">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                مدة التوصيل التقديرية بالعربية
               </label>
               <input
                 type="text"
-                value={scheduleDraft.estimatedDeliveryTimeAr || ''}
-                onChange={(e) => handleScheduleChange('estimatedDeliveryTimeAr', e.target.value)}
-                placeholder="30 - 45 دقيقة"
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none"
-                dir="rtl"
+                value={draftContact.workingHoursAr ? '30 - 45 دقيقة' : '30 - 45 دقيقة'}
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[var(--text-secondary)]">
-                {language === 'ar' ? 'الوقت المتوقع للتوصيل (بالإنجليزية)' : 'Estimated Delivery Time (English)'}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2">
+                مدة التوصيل التقديرية بالإنجليزية
               </label>
               <input
                 type="text"
-                value={scheduleDraft.estimatedDeliveryTimeEn || ''}
-                onChange={(e) => handleScheduleChange('estimatedDeliveryTimeEn', e.target.value)}
-                placeholder="30 - 45 mins"
-                className="px-3.5 py-2.5 rounded-xl text-sm border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] outline-none"
-                dir="ltr"
+                value="30 - 45 mins"
+                readOnly
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-sm text-white"
               />
             </div>
           </div>
-
-          <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-md transition-all min-h-[42px]"
-            >
-              <Save className="w-4 h-4" />
-              <span>{language === 'ar' ? 'حفظ شروط التوصيل' : 'Save Delivery Rules'}</span>
-            </button>
-          </div>
-        </form>
+        </div>
       )}
     </div>
   );

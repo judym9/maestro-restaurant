@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { BrandAssets } from '../../../utils/imageRegistry';
 
 export interface AdminRouteGuardProps {
   children?: React.ReactNode;
@@ -21,14 +22,17 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) =>
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg-primary,#06090E)] text-[var(--text-primary,#FFFDF8)]">
         <div className="flex flex-col items-center gap-4">
           <div className="relative w-16 h-16 rounded-2xl bg-white/5 border border-white/10 p-2 flex items-center justify-center shadow-2xl animate-pulse">
-            <img
-              src="/logo.png"
-              alt="El Maestro"
-              className="w-12 h-12 object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <picture>
+              <source srcSet={BrandAssets.logo.webp} type="image/webp" />
+              <img
+                src={BrandAssets.logo.src}
+                alt="El Maestro"
+                className="w-12 h-12 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/logo.png';
+                }}
+              />
+            </picture>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />

@@ -1,125 +1,94 @@
-import React, { useEffect } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
-import { useLanguage } from '../../../../app/providers/LanguageProvider';
+import React from 'react';
+import { AlertTriangle, Trash2, Check } from 'lucide-react';
+import { Modal } from './Modal';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
-  titleAr: string;
-  titleEn: string;
-  messageAr: string;
-  messageEn: string;
-  confirmLabelAr?: string;
-  confirmLabelEn?: string;
-  cancelLabelAr?: string;
-  cancelLabelEn?: string;
-  isDestructive?: boolean;
+  onClose: () => void;
+  onConfirm: () => void | Promise<void>;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'danger' | 'warning' | 'primary';
   isLoading?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
-  titleAr,
-  titleEn,
-  messageAr,
-  messageEn,
-  confirmLabelAr = 'تأكيد الحذف',
-  confirmLabelEn = 'Confirm Delete',
-  cancelLabelAr = 'إلغاء',
-  cancelLabelEn = 'Cancel',
-  isDestructive = true,
-  isLoading = false,
+  onClose,
   onConfirm,
-  onCancel,
+  title,
+  message,
+  confirmText = 'تأكيد الحذف',
+  cancelText = 'إلغاء',
+  variant = 'danger',
+  isLoading = false,
 }) => {
-  const { language } = useLanguage();
+  const iconConfig = {
+    danger: {
+      icon: Trash2,
+      wrapperClass: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+      btnClass:
+        'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20',
+    },
+    warning: {
+      icon: AlertTriangle,
+      wrapperClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+      btnClass:
+        'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20',
+    },
+    primary: {
+      icon: Check,
+      wrapperClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+      btnClass:
+        'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold',
+    },
+  }[variant];
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
-        onCancel();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isLoading, onCancel]);
+  const Icon = iconConfig.icon;
 
-  if (!isOpen) return null;
+  const handleConfirm = async () => {
+    await onConfirm();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
-        onClick={isLoading ? undefined : onCancel}
-        aria-hidden="true"
-      />
-
-      {/* Modal Dialog */}
-      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] p-6 shadow-2xl z-10 animate-scale-up">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="absolute top-4 end-4 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1.5 rounded-xl hover:bg-[var(--bg-surface)] transition-colors"
-          aria-label="Close dialog"
+    <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="md">
+      <div className="flex flex-col items-center text-center space-y-5 py-3">
+        <div
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center border shadow-sm ${iconConfig.wrapperClass}`}
         >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="flex items-start gap-4">
-          <div
-            className={`
-              flex items-center justify-center w-12 h-12 rounded-2xl shrink-0
-              ${
-                isDestructive
-                  ? 'bg-rose-500/15 text-rose-400 border border-rose-500/25'
-                  : 'bg-[var(--accent-gold)]/15 text-[var(--accent-gold)] border border-[var(--accent-gold)]/25'
-              }
-            `}
-          >
-            <AlertTriangle className="w-6 h-6 stroke-[2]" />
-          </div>
-
-          <div className="flex flex-col min-w-0 pt-0.5">
-            <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">
-              {language === 'ar' ? titleAr : titleEn}
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              {language === 'ar' ? messageAr : messageEn}
-            </p>
-          </div>
+          <Icon className="w-8 h-8" />
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-[var(--border-subtle)]">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-elevated)] transition-colors min-h-[42px]"
-          >
-            {language === 'ar' ? cancelLabelAr : cancelLabelEn}
-          </button>
+        <p className="text-sm text-slate-300 leading-relaxed max-w-sm px-2">
+          {message}
+        </p>
 
+        <div className="flex items-center gap-3.5 w-full pt-5 border-t border-slate-800">
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={onClose}
             disabled={isLoading}
-            className={`
-              px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md min-h-[42px]
-              ${
-                isDestructive
-                  ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-900/30'
-                  : 'bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-amber-900/30'
-              }
-            `}
+            className="flex-1 py-3 px-5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors disabled:opacity-50"
           >
-            {isLoading ? (language === 'ar' ? 'جارٍ التنفيذ...' : 'Processing...') : language === 'ar' ? confirmLabelAr : confirmLabelEn}
+            {cancelText}
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={isLoading}
+            className={`flex-1 py-3 px-5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${iconConfig.btnClass}`}
+          >
+            {isLoading ? (
+              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <span>{confirmText}</span>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

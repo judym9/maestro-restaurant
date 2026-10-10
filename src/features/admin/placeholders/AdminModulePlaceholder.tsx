@@ -34,7 +34,7 @@ export const AdminModulePlaceholder: React.FC<AdminModulePlaceholderProps> = ({
   const Icon = activeNav?.icon || Sparkles;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 sm:p-10 rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-[var(--card-shadow)] relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-8 sm:p-12 px-6 sm:px-12 py-8 sm:py-12 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-[var(--card-shadow)] relative overflow-hidden">
       {/* Ambient background glow */}
       <div
         className="absolute -top-24 -end-24 w-72 h-72 rounded-full bg-[var(--accent-gold)] opacity-5 blur-3xl pointer-events-none"
@@ -54,7 +54,7 @@ export const AdminModulePlaceholder: React.FC<AdminModulePlaceholderProps> = ({
         {desc}
       </p>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-[var(--text-secondary)] px-4 py-2 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
+      <div className="flex flex-wrap items-center justify-center gap-2.5 text-xs font-medium text-[var(--text-secondary)] px-4.5 py-2.5 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] shadow-sm">
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         <span>{language === 'ar' ? 'المسار النشط:' : 'Active Route:'}</span>
         <code className="text-[var(--accent-gold)] font-mono">{location.pathname}</code>

@@ -1,17 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Globe, PhoneCall, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Globe, PhoneCall, ShieldCheck, Lock } from 'lucide-react';
 import { ThemeSwitcher } from '../theme/ThemeSwitcher';
 import { CartTriggerButton } from '../cart/components/CartTriggerButton';
 import { Button } from '../../common/components/Button/Button';
 import { BrandAssets } from '../../utils/imageRegistry';
 import { useLanguage } from '../../app/providers/LanguageProvider';
+import { useAdminAuth } from '../admin/context/AdminAuthContext';
 import './Navbar.css';
 
 export const Navbar: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguage();
+  const { isAuthenticated } = useAdminAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+
+  const handleAdminNavigation = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    if (isAuthenticated) {
+      navigate('/admin');
+    } else {
+      navigate('/admin/login', { state: { from: { pathname: '/admin' } } });
+    }
+  };
 
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
@@ -162,9 +175,14 @@ export const Navbar: React.FC = () => {
             </li>
             <li>
               <Link
-                to="/admin"
+                to={isAuthenticated ? '/admin' : '/admin/login'}
+                onClick={handleAdminNavigation}
                 className="nav-link"
-                title={language === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Portal'}
+                title={
+                  language === 'ar'
+                    ? (isAuthenticated ? 'لوحة تحكم الإدارة (مُسجّل)' : 'تسجيل دخول لوحة الإدارة')
+                    : (isAuthenticated ? 'Admin Dashboard (Active)' : 'Admin Login')
+                }
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -175,10 +193,17 @@ export const Navbar: React.FC = () => {
                   padding: '0.35rem 0.75rem',
                   borderRadius: '9999px',
                   border: '1px solid rgba(245, 158, 11, 0.25)',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <ShieldCheck size={14} />
+                {isAuthenticated ? <ShieldCheck size={14} /> : <Lock size={14} />}
                 <span>{language === 'ar' ? 'الإدارة' : 'Admin'}</span>
+                {isAuthenticated && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                    title={language === 'ar' ? 'جلسة نشطة' : 'Active Session'}
+                  />
+                )}
               </Link>
             </li>
           </ul>
@@ -281,13 +306,20 @@ export const Navbar: React.FC = () => {
             {t.common.nav.contact}
           </a>
           <Link
-            to="/admin"
+            to={isAuthenticated ? '/admin' : '/admin/login'}
+            onClick={handleAdminNavigation}
             className="mobile-nav-link"
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#F59E0B', fontWeight: 600 }}
-            onClick={() => setMobileMenuOpen(false)}
           >
-            <ShieldCheck size={18} />
-            <span>{language === 'ar' ? 'لوحة تحكم الإدارة' : 'Admin Dashboard'}</span>
+            {isAuthenticated ? <ShieldCheck size={18} /> : <Lock size={18} />}
+            <span>
+              {language === 'ar'
+                ? (isAuthenticated ? 'لوحة تحكم الإدارة (نشط)' : 'تسجيل الدخول للإدارة')
+                : (isAuthenticated ? 'Admin Dashboard' : 'Admin Login')}
+            </span>
+            {isAuthenticated && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 ms-auto animate-pulse" />
+            )}
           </Link>
 
           {/* Mobile Drawer Utility Controls: Language & Theme Switcher */}

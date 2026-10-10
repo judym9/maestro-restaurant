@@ -1,188 +1,168 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, Tag, Flame, Clock } from 'lucide-react';
-import { useLanguage } from '../../../app/providers/LanguageProvider';
+import {
+  Sparkles,
+  Plus,
+  Tag,
+  Percent,
+  CheckCircle2,
+} from 'lucide-react';
 import { usePromotions } from '../hooks/usePromotions';
 import { useAdminToast } from '../context/AdminToastContext';
+import { MetricCard } from '../components/common/MetricCard';
+import { EmptyState } from '../components/common/EmptyState';
 import { PromoCard } from '../components/promotions/PromoCard';
 import { PromoFormModal } from '../components/promotions/PromoFormModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
-import { MetricCard } from '../components/common/MetricCard';
 import type { AdminPromoDeal, PromoFormData } from '../types/promotions.types';
 
 export const AdminPromotionsPage: React.FC = () => {
-  const { language } = useLanguage();
   const { showToast } = useAdminToast();
-
   const {
     promos,
     savePromo,
     deletePromo,
     togglePromoActive,
-  } = usePromotions(50); // Show all promos
+  } = usePromotions();
 
+  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<AdminPromoDeal | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Compute Metrics
+  const totalPromos = promos.length;
   const activeCount = promos.filter((p) => p.isActive).length;
   const avgDiscount =
-    promos.length > 0
-      ? Math.round(promos.reduce((sum, p) => sum + p.discountPercent, 0) / promos.length)
+    totalPromos > 0
+      ? Math.round(
+          promos.reduce((acc, p) => acc + (p.discountPercent || 0), 0) /
+            totalPromos
+        )
       : 0;
 
-  const handleOpenNew = () => {
+  // Handlers
+  const handleOpenNewPromo = () => {
     setEditingPromo(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (promo: AdminPromoDeal) => {
+  const handleEditPromo = (promo: AdminPromoDeal) => {
     setEditingPromo(promo);
     setIsModalOpen(true);
   };
 
-  const handleSave = (formData: PromoFormData) => {
-    savePromo(formData);
+  const handleSavePromo = (data: PromoFormData) => {
+    savePromo(data);
     setIsModalOpen(false);
     showToast(
       'success',
-      editingPromo
-        ? language === 'ar'
-          ? 'تم تحديث بيانات العرض بنجاح'
-          : 'Promotion updated successfully'
-        : language === 'ar'
-        ? 'تم إنشاء العرض الملكي بنجاح'
-        : 'Royal promotion published successfully'
+      data.id ? 'تم تعديل بيانات العرض الملكي بنجاح' : 'تم إطلاق العرض الملكي بنجاح'
     );
   };
 
-  const handleToggle = (id: string) => {
-    const res = togglePromoActive(id);
-    if (res) {
-      showToast(
-        'info',
-        res.isActive
-          ? language === 'ar'
-            ? 'تم تفعيل العرض'
-            : 'Promotion activated'
-          : language === 'ar'
-          ? 'تم إيقاف العرض مؤقتاً'
-          : 'Promotion paused'
-      );
+  const handleConfirmDelete = () => {
+    if (deleteConfirmId) {
+      deletePromo(deleteConfirmId);
+      setDeleteConfirmId(null);
+      showToast('info', 'تم حذف العرض الترويجي بنجاح');
     }
   };
 
-  const executeDelete = () => {
-    if (!deleteConfirmId) return;
-    deletePromo(deleteConfirmId);
-    setDeleteConfirmId(null);
-    showToast('success', language === 'ar' ? 'تم حذف العرض بنجاح' : 'Promotion deleted successfully');
+  const handleToggleActive = (id: string) => {
+    togglePromoActive(id);
+    showToast('info', 'تم تحديث حالة نشر العرض الترويجي');
   };
 
-  const targetPromo = promos.find((p) => p.id === deleteConfirmId);
-
   return (
-    <div className="flex flex-col gap-8 w-full animate-fade-in">
-      {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] tracking-tight font-['Cairo',sans-serif]">
-            {language === 'ar' ? 'العروض الملكية وحزم التوفير' : 'Royal Promotions & Deals'}
+          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <Sparkles className="w-6 h-6 text-amber-500" />
+            <span>إدارة العروض الترويجية الملكية</span>
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mt-1">
-            {language === 'ar'
-              ? 'إدارة باقات التوفير الخاصة، نسب الخصومات، والعدادات الزمنية'
-              : 'Manage celebration bundles, discount calculations & promotional countdowns'}
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            إطلاق باقات التوفير العائلية، الخصومات الحصرية، والوجبات الترويجية المركبة
           </p>
         </div>
 
         <button
           type="button"
-          onClick={handleOpenNew}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] shadow-lg shadow-amber-900/20 transition-all min-h-[44px]"
+          onClick={handleOpenNewPromo}
+          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg shadow-amber-500/20 active:scale-95"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>{language === 'ar' ? 'إنشاء عرض ملكي' : 'Create Royal Deal'}</span>
+          <Plus className="w-4 h-4" />
+          <span>إنشاء عرض ملكي جديد</span>
         </button>
       </div>
 
-      {/* Telemetry Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+      {/* 3 Telemetry Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         <MetricCard
-          title={language === 'ar' ? 'إجمالي العروض المسجلة' : 'Total Promotions'}
-          value={promos.length}
-          subtitle={language === 'ar' ? 'العروض النشطة والمؤقتة' : 'Active and archived deals'}
+          title="إجمالي العروض الترويجية"
+          value={totalPromos}
+          subtitle="باقات وحزم مسجلة"
           icon={Tag}
-          accentColor="gold"
+          badge={{ text: 'شامل', variant: 'gold' }}
         />
 
         <MetricCard
-          title={language === 'ar' ? 'العروض النشطة حالياً' : 'Active Live Deals'}
+          title="العروض النشطة الحالية"
           value={activeCount}
-          subtitle={language === 'ar' ? 'متاحة للطلب الفوري في واجهة الزبائن' : 'Visible in customer storefront'}
-          icon={Flame}
-          accentColor="emerald"
+          subtitle="معروضة للعملاء في واجهة المتجر"
+          icon={CheckCircle2}
+          badge={{ text: 'معروضة', variant: 'success' }}
         />
 
         <MetricCard
-          title={language === 'ar' ? 'متوسط نسبة الخصم' : 'Avg Discount Rate'}
+          title="متوسط نسبة التخفيض"
           value={`${avgDiscount}%`}
-          subtitle={language === 'ar' ? 'توفير حقيقي للزبائن' : 'Average customer savings'}
-          icon={Sparkles}
-          accentColor="crimson"
+          subtitle="نسب التوفير التنافسية"
+          icon={Percent}
+          badge={{ text: 'توفير', variant: 'warning' }}
         />
       </div>
 
-      {/* Deals Grid */}
+      {/* Main Promotions Grid Canvas */}
       {promos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <Clock className="w-12 h-12 text-[var(--text-muted)] mb-3" />
-          <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">
-            {language === 'ar' ? 'لا توجد عروض ترويجية مسجلة حالياً' : 'No promotions found'}
-          </h3>
-          <p className="text-xs text-[var(--text-muted)] max-w-sm mb-4">
-            {language === 'ar'
-              ? 'أطلق أول باقة توفير ملكية لزبائن المايسترو بخصومات استثنائية.'
-              : 'Launch your first royal promotion to delight your customers.'}
-          </p>
-          <button
-            type="button"
-            onClick={handleOpenNew}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-[var(--accent-gold)] text-[var(--btn-primary-text)] hover:bg-[var(--gold-600)] transition-all"
-          >
-            {language === 'ar' ? 'إنشاء أول عرض الآن' : 'Create First Deal Now'}
-          </button>
-        </div>
+        <EmptyState
+          title="لا توجد عروض ترويجية نشطة حالياً"
+          description="يمكنك إنشاء أول باقة توفير ملكية أو وجبة ترويجية لجذب الزبائن وزيادة المبيعات."
+          actionText="إنشاء عرض ترويجي جديد"
+          onAction={handleOpenNewPromo}
+        />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {promos.map((promo) => (
             <PromoCard
               key={promo.id}
               promo={promo}
-              onEdit={handleEdit}
-              onDelete={setDeleteConfirmId}
-              onToggleActive={handleToggle}
+              onEdit={handleEditPromo}
+              onDelete={(id) => setDeleteConfirmId(id)}
+              onToggleActive={handleToggleActive}
             />
           ))}
         </div>
       )}
 
-      {/* Form Modal */}
+      {/* Promo Form Modal */}
       <PromoFormModal
         isOpen={isModalOpen}
-        editingPromo={editingPromo}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
+        onSave={handleSavePromo}
+        promo={editingPromo}
       />
 
-      {/* Confirm Deletion Dialog */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={deleteConfirmId !== null}
-        titleAr="تأكيد حذف العرض الترويجي"
-        titleEn="Confirm Promotion Deletion"
-        messageAr={`هل أنت متأكد من رغبتك في حذف العرض "${targetPromo?.titleAr}" نهائياً؟`}
-        messageEn={`Are you sure you want to permanently delete "${targetPromo?.titleEn}"?`}
-        onConfirm={executeDelete}
-        onCancel={() => setDeleteConfirmId(null)}
+        isOpen={Boolean(deleteConfirmId)}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={handleConfirmDelete}
+        title="حذف العرض الترويجي"
+        message="هل أنت متأكد من حذف هذا العرض الترويجي؟ ستتم إزالته نهائياً من شريط العروض بالمتجر."
+        confirmText="تأكيد حذف العرض"
+        variant="danger"
       />
     </div>
   );

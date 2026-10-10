@@ -4,12 +4,15 @@ export * from './auth/pages/AdminLoginPage';
 export * from './placeholders/AdminPlaceholderLayout';
 export * from './placeholders/AdminModulePlaceholder';
 
-// Full Admin Pages
+// Full Executive Admin Pages
 export * from './pages/AdminDashboardPage';
 export * from './pages/AdminMenuPage';
 export * from './pages/AdminPromotionsPage';
 export * from './pages/AdminSettingsPage';
 export * from './pages/AdminThemePage';
+
+// Presentation Components
+export * from './components';
 
 // Shared Layout & Navigation Architecture
 export * from './shared/components';
@@ -42,3 +45,7 @@ export * from './services/settingsService';
 export * from './types/menu.types';
 export * from './types/settings.types';
 export * from './types/promotions.types';
+
+// Mathematical & Accessibility Utils
+export * from './utils/mathCalculations';
+export * from './utils/themeContrast';
