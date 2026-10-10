@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Loader2,
   Home,
-  CheckCircle2,
   KeyRound,
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -29,7 +28,6 @@ export const AdminLoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [demoCopied, setDemoCopied] = useState(false);
 
   // If already authenticated, redirect safely to intended admin page or dashboard
   React.useEffect(() => {
